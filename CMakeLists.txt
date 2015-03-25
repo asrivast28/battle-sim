@@ -6,7 +6,7 @@ project(battle-sim)
 ##### General Compilation Settings
 
 # TODO: do we need --std=c++11 ?
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wuninitialized")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wuninitialized --std=c++11")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -funroll-loops")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
@@ -51,8 +51,13 @@ include_directories("${PROJECT_SOURCE_DIR}/ext") # for tclap include
 # for pretty printing of std:: datastructures
 include_directories("${PROJECT_SOURCE_DIR}/ext/cxx-prettyprint")
 
+# compile gtest:
+add_library(gtest "${PROJECT_SOURCE_DIR}/ext/gtest/gtest-all.cc")
+target_link_libraries(gtest pthread)
+
 # add own subdirectories
 add_subdirectory(src)
+add_subdirectory(test)
 
 # TODO: add GTest??
 #add_subdirectory(src/tests)
