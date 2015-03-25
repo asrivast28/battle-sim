@@ -40,6 +40,11 @@ TEST(MatrixTest, BorderMatrixInt) {
     // check dimensions
     ASSERT_EQ(5, mat.ncols());
     ASSERT_EQ(5, mat.nrows());
+    ASSERT_EQ(b, mat.bordersize());
+
+    // check dims of underlying matrix
+    ASSERT_EQ(5+2*b, mat.mat().ncols());
+    ASSERT_EQ(5+2*b, mat.mat().nrows());
 
     // set some matrix elements:
     mat(0,0) = 1;
