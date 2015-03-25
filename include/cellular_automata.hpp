@@ -15,17 +15,70 @@
 #include <assert.h>
 #include <algorithm>
 
+// TODO: generalize the border size
 
-class CellularAutomata
-{
+// simple matrix type, data saved as row-major
+template <typename T>
+class matrix {
+public:
+    typedef T value_type;
+
+    /// Default constructor
+    matrix() : m(0), n(0), data() {}
+
+    /// Copy constructor
+    matrix(const matrix<T>& o) : m(o.m), n(o.n), data(o.data) {}
+
+    /// emtpy initialization
+    matrix(std::size_t nrows, std::size_t ncols)
+        : m(nrows), n(ncols), data(n*m) {}
+
+    /// Destructor
+    virtual ~matrix() {}
+
+    /// Assignment operator
+    virtual matrix<T>& operator=(const matrix<T>& other) {
+        m = other.m;
+        n = other.n;
+        data = other.data;
+    }
+
+    /// element access operator
+    const T& operator()(std::size_t i, std::size_t j) const
+    {
+        assert(0 <= i && i < m);
+        assert(0 <= j && j < n);
+        return data[i*n + j];
+    }
+
+    /// element access operator
+    T& operator()(std::size_t i, std::size_t j)
+    {
+        assert(0 <= i && i < m);
+        assert(0 <= j && j < n);
+        return data[i*n + j];
+    }
+
+protected:
+    /// numer rows
+    const std::size_t m;
+    /// number columns
+    const std::size_t n;
+    std::vector<T> data;
+};
+
+// matrix with border (generalized)
+// TODO
+
+template <typename T>
+class CellularAutomata {
 public:
     /// define the base data type for a cell
-    typedef uint8_t cell_t;
+    typedef T cell_type;
 protected:
     // the allocated data for double buffering
-    cell_t * data;
-    cell_t * back_buffer;
-
+    std::vector<cell_type> data;
+    std::vector<cell_type> back_buffer;
     /// Number of rows
     const std::size_t m;
     /// Number of columns
@@ -50,27 +103,27 @@ protected:
     }
 
     /// returns the value of the cell given by the indeces relative to the core
-    inline cell_t getCell(const std::size_t i, const std::size_t j) const
+    inline cell_type getCell(const std::size_t i, const std::size_t j) const
     {
-        return *(data + index2offset(i,j));
+        return data[index2offset(i,j)];
     }
 
     /// returns the value of the cell given by the indeces
-    inline cell_t getCellGlobal(const std::size_t i, const std::size_t j) const
+    inline cell_type getCellGlobal(const std::size_t i, const std::size_t j) const
     {
-        return *(data + allindex2offset(i,j));
+        return data[allindex2offset(i,j)];
     }
 
     /// sets the value for the given cell indeces in the back-buffer.
-    inline void setBufferCell(const std::size_t i, const std::size_t j, const cell_t value)
+    inline void setBufferCell(const std::size_t i, const std::size_t j, const cell_type value)
     {
-        *(back_buffer + index2offset(i,j)) = value;
+        back_buffer[index2offset(i,j)] = value;
     }
 
     ///'sets the value for the given cell indeces in the front-buffer
-    inline void setCell(const std::size_t i, const std::size_t j, const cell_t value)
+    inline void setCell(const std::size_t i, const std::size_t j, const cell_type value)
     {
-        *(data + index2offset(i,j)) = value;
+        data[index2offset(i,j)] = value;
     }
 
     /// copies the back buffer into the front buffer
@@ -82,7 +135,6 @@ protected:
     /// Game of Life
     inline void updateCell(std::size_t i, std::size_t j)
     {
-        // TODO: this could potentially be done more efficiently
         // count number of neighbors with status = 1
         int count = 0;
 
@@ -138,26 +190,16 @@ public:
 
     /// Construtor taking two arguments for the size of the grid
     CellularAutomata(std::size_t nrows, std::size_t ncols)
-        : m(nrows), n(ncols), data_size((m+2)*(n+2))
+        : m(nrows), n(ncols), data_size((m+2)*(n+2)),
+          data(data_size), back_buffer(data_size)
     {
         // allocate the data buffers
-        data = new cell_t[data_size];
-        back_buffer = new cell_t[data_size];
-
-        // initialize everything with zero
-        std::fill(data, data+data_size, 0);
-        std::fill(back_buffer, back_buffer+data_size, 0);
+        data = new cell_type[data_size];
+        back_buffer = new cell_type[data_size];
     }
 
     /// Deconstructor
-    virtual ~CellularAutomata()
-    {
-        // deallocate the data buffers
-        delete[] data;
-        data = NULL;
-        delete[] back_buffer;
-        back_buffer = NULL;
-    }
+    virtual ~CellularAutomata() {}
 
     /**
      * @brief Sequentially calculates the next iteration of the cellular automata.
@@ -184,13 +226,13 @@ public:
      *
      * @param input_data
      */
-    void init(std::vector<cell_t>& input_data)
+    void init(std::vector<cell_type>& input_data)
     {
         // initializes the inner grid with the given data
         assert(m*n == input_data.size());
 
         // fill in row major order
-        std::vector<cell_t>::iterator input_it = input_data.begin();
+        typename std::vector<cell_type>::iterator input_it = input_data.begin();
         for (unsigned int i = 0; i < m; ++i)
         {
             for (unsigned int j = 0; j < n; ++j)
@@ -221,11 +263,11 @@ public:
      *
      * @return 
      */
-    std::vector<cell_t> getCells()
+    std::vector<cell_type> getCells()
     {
-        std::vector<cell_t> result(m*n);
+        std::vector<cell_type> result(m*n);
         // fill in row major order
-        std::vector<cell_t>::iterator out_it = result.begin();
+        typename std::vector<cell_type>::iterator out_it = result.begin();
         for (unsigned int i = 0; i < m; ++i)
         {
             for (unsigned int j = 0; j < n; ++j)

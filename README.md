@@ -1,5 +1,6 @@
-CSE 6730 Project 1
-==================
+Battle Simulator using Floor Field Models
+=========================================
+(CSE6730 Modeling and Simulation Project 2)
 
 
 Building
