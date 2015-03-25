@@ -123,12 +123,12 @@ public:
 
     /// emtpy initialization
     border_matrix(std::size_t nrows, std::size_t ncols, std::size_t border_size)
-        : matrix_type(nrows+2*border_size, ncols+2*border_size) {}
+        : matrix_type(nrows+2*border_size, ncols+2*border_size), border_size(border_size) {}
 
     /// initialization with data from iterators
     template <typename InputIterator>
-    border_matrix(std::size_t nrows, std::size_t ncols, InputIterator begin, InputIterator end)
-        : matrix_type(nrows+2*border_size, ncols+2*border_size)
+    border_matrix(std::size_t nrows, std::size_t ncols, std::size_t border_size, InputIterator begin, InputIterator end)
+        : matrix_type(nrows+2*border_size, ncols+2*border_size), border_size(border_size)
     {
         std::size_t size = std::distance(begin, end);
         if (size == nrows*ncols)
