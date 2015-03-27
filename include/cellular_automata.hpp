@@ -12,7 +12,7 @@
 
 
 #include <cstdlib>
-#include <assert.h>
+#include <cassert>
 #include <algorithm>
 #include <vector>
 
@@ -32,7 +32,7 @@ protected:
     /// Total data size
     const std::size_t data_size;
 
-    // returns the offset for the given 2d indeces relative to the core
+    // returns the offset for the given 2d indices relative to the core
     inline std::size_t index2offset(const std::size_t i, const std::size_t j) const
     {
         assert(0 <= i && i < m);
@@ -40,7 +40,7 @@ protected:
         return (i+1) * (n+2) + (j+1);
     }
 
-    // returns the offset for the given 2d indeces relative to the whole data
+    // returns the offset for the given 2d indices relative to the whole data
     inline std::size_t allindex2offset(const std::size_t i, const std::size_t j) const
     {
         assert(0 <= i && i < m+2);
@@ -48,25 +48,25 @@ protected:
         return i * (n+2) + j;
     }
 
-    /// returns the value of the cell given by the indeces relative to the core
+    /// returns the value of the cell given by the indices relative to the core
     inline cell_type getCell(const std::size_t i, const std::size_t j) const
     {
         return data[index2offset(i,j)];
     }
 
-    /// returns the value of the cell given by the indeces
+    /// returns the value of the cell given by the indices
     inline cell_type getCellGlobal(const std::size_t i, const std::size_t j) const
     {
         return data[allindex2offset(i,j)];
     }
 
-    /// sets the value for the given cell indeces in the back-buffer.
+    /// sets the value for the given cell indices in the back-buffer.
     inline void setBufferCell(const std::size_t i, const std::size_t j, const cell_type value)
     {
         back_buffer[index2offset(i,j)] = value;
     }
 
-    ///'sets the value for the given cell indeces in the front-buffer
+    ///'sets the value for the given cell indices in the front-buffer
     inline void setCell(const std::size_t i, const std::size_t j, const cell_type value)
     {
         data[index2offset(i,j)] = value;
@@ -144,7 +144,7 @@ public:
         back_buffer = new cell_type[data_size];
     }
 
-    /// Deconstructor
+    /// Destructor
     virtual ~CellularAutomata() {}
 
     /**
@@ -190,7 +190,7 @@ public:
     }
 
     /**
-     * @brief Randomly initializes the 
+     * @brief Randomly initializes the cellular automata grid.
      */
     void initRandom()
     {
