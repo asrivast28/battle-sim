@@ -138,11 +138,7 @@ public:
     CellularAutomata(std::size_t nrows, std::size_t ncols)
         : m(nrows), n(ncols), data_size((m+2)*(n+2)),
           data(data_size), back_buffer(data_size)
-    {
-        // allocate the data buffers
-        data = new cell_type[data_size];
-        back_buffer = new cell_type[data_size];
-    }
+    { }
 
     /// Destructor
     virtual ~CellularAutomata() {}
