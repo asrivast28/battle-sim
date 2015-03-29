@@ -1,7 +1,7 @@
 /**
  * @file    soldier.hpp
  * @author  Ankit Srivastava <asrivast@gatech.edu>
- * @brief   
+ * @brief
  *
  * Copyright (c) TODO
  */
@@ -21,26 +21,51 @@ public:
     // data type for storing skill level
     typedef unsigned char SkillType;
     // data type for storing aggression level
-    typedef unsigned char AggressionType; 
+    typedef unsigned char AggressionType;
 
 public:
-    // Default constructor
+    /// default constructor
     Soldier()
       : m_army(), m_type(),
         m_skill(0), m_aggression(0)
     { }
 
-    // Constructor
+    /// constructor
     Soldier(bool army, Type type)
         : m_army(army), m_type(type),
           m_skill(0), m_aggression(0)
     { }
 
-    // Copy constructor
+    /// copy constructor
     Soldier(const Soldier& soldier)
         : m_army(soldier.m_army), m_type(soldier.m_type),
           m_skill(soldier.m_skill), m_aggression(soldier.m_aggression)
     { }
+
+    /// returns index of the army to which this soldier belongs
+    unsigned char
+    army() const
+    {
+        return m_army ? 1 : 0;
+    }
+
+    /// returns aggression of this soldier as a fraction of the maximum aggression
+    float
+    aggression() const
+    {
+        AggressionType max_aggresion = 0;
+        max_aggresion = ~max_aggresion;
+        return static_cast<float>(m_aggression) / max_aggresion;
+    }
+
+    /// returns skill level of this soldier as a fraction of the maximum skill level
+    float
+    skill() const
+    {
+        SkillType max_skill = 0;
+        max_skill = ~max_skill;
+        return static_cast<float>(m_aggression) / max_skill;
+    }
 
     // Destructor
     ~Soldier()
