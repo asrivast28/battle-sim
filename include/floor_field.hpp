@@ -101,12 +101,28 @@ public:
         // choose-a-kill loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
+                if (m_soldiers(x, y) != 0) {
+                    // TODO: choose a soldier of the enemy army to kill
+                    unsigned char i = 0, j = 0;
+                }
             }
         }
 
         // actual kill loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
+                if (m_soldiers(x, y) != 0) {
+                    float s_self = m_claimed(x, y)->skill();
+                    float p_survival = s_self / (m_probability(x, y) + s_self);
+                    // decide if the soldier survives or not, based on the survival probability
+                    bool survives = true;
+                    if (!survives) {
+                        // TODO: collect statistics for the soldier
+                        // free the cell
+                        delete m_soldiers(x, y);
+                        m_soldiers(x, y) = 0;
+                    }
+                }
             }
         }
     }
@@ -191,7 +207,7 @@ private:
         // also set the bit corresponding to this soldier in the target cell
         // first find the index of this cell relative to the target cell
         unsigned char index = 0;
-        m_claimed(i, j) = m_claimed(i, j) | (1 << index);
+        m_claimed(x + i - 1, y + j - 1) = m_claimed(x + i - 1, y + j - 1) | (1 << index);
     }
 
 private:
