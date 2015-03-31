@@ -10,6 +10,7 @@
 
 #include <assert.h>
 #include <vector>
+#include <iostream>
 
 // simple matrix type, data saved as row-major
 template <typename T>
@@ -228,6 +229,24 @@ public:
 protected:
     std::size_t border_size;
 };
+
+
+template<typename T>
+std::ostream& operator<< (std::ostream& stream, const matrix<T>& mat)
+{
+    for (std::size_t i = 0; i < mat.nrows(); ++i)
+    {
+        stream << "[";
+        for (std::size_t j = 0; j < mat.ncols(); ++j)
+        {
+            if (j != 0)
+                stream << " ";
+            stream << mat(i,j);
+        }
+        stream << "]" << std::endl;
+    }
+    return stream;
+}
 
 
 #endif // MATRIXH_HPP

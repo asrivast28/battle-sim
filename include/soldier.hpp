@@ -10,6 +10,7 @@
 #define SOLDIER_H
 
 #include <map>
+#include <iostream>
 
 class Soldier {
 public:
@@ -17,7 +18,8 @@ public:
     enum Type {
       LEADER,
       SWORDSMAN,
-      ARCHER
+      ARCHER,
+      EMPTY
     };
 
     // data type for storing skill level
@@ -28,7 +30,7 @@ public:
 public:
     /// default constructor
     Soldier()
-      : m_army(), m_type(),
+      : m_army(), m_type(EMPTY),
         m_skill(0), m_aggression(0)
     { }
 
@@ -56,6 +58,17 @@ public:
     enemy() const
     {
         return !m_army ? 1 : 0;
+    }
+
+    // returns if this cell is empty
+    bool empty() const
+    {
+        return m_type == EMPTY;
+    }
+
+    void kill()
+    {
+        m_type = EMPTY;
     }
 
     /// returns aggression of this soldier as a fraction of the maximum aggression
@@ -116,5 +129,18 @@ private:
 }; // class Soldier
 
 std::map<Soldier::Type, unsigned char> Soldier::m_killRadiusMap = Soldier::createKillRadiusMap();
+
+std::ostream& operator<< (std::ostream& stream, const Soldier& t)
+{
+    if (t.empty())
+        stream << " ";
+    else if (t.army() == 0)
+        stream << "x";
+    else if (t.army() == 1)
+        stream << "o";
+    else
+        stream << "-";
+    return stream;
+}
 
 #endif // SOLDIER_H

@@ -32,7 +32,14 @@ public:
         // initialize the extended neighborhood counts
         m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
         m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
+    }
 
+    // access to the matrix of sodiers
+    const matrix<Soldier>& mat() const {
+      return m_soldiers;
+    }
+    matrix<Soldier>& mat() {
+      return m_soldiers;
     }
 
     void
@@ -51,10 +58,10 @@ public:
             for (std::size_t y = 0; y < m_ncols; ++y) {
                 unsigned char neighbors[] = {0, 0};
                 for (unsigned char i = 0; i < 2 * m_k; ++i) {
-                    if (x + i >= m_k) {
+                    if ((x + i >= m_k) && (x + i - m_k < m_nrows)) {
                         for (unsigned char j = 0; j < 2 * m_k; ++j) {
-                            if (y + j >= m_k) {
-                                ++neighbors[m_soldiers(x + i - m_k, y + j - m_k)->army()];
+                            if ((y + j >= m_k) && (y + j - m_k < m_ncols)) {
+                                ++neighbors[m_soldiers(x + i - m_k, y + j - m_k).army()];
                             }
                         }
                     }
@@ -68,7 +75,7 @@ public:
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
                 // do the calculations only if there is a soldier in the current cell
-                if (m_soldiers(x, y) != 0) {
+                if (!m_soldiers(x, y).empty()) {
                     calculateGlobalPreference(x, y, m_g);
                     calculateLocalPreference(x, y, m_l);
                     calculateTransitionalProbabilities(x, y, m_g, m_l, trans_prob);
@@ -128,17 +135,17 @@ public:
         // choose-a-kill loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
-                if (m_soldiers(x, y) != 0) {
-                    unsigned char army = m_soldiers(x, y)->army();
-                    unsigned char k = m_soldiers(x, y)->killRadius();
+                if (!m_soldiers(x, y).empty()) {
+                    unsigned char army = m_soldiers(x, y).army();
+                    unsigned char k = m_soldiers(x, y).killRadius();
                     std::vector<std::pair<unsigned char, unsigned char> > potentials;
                     // scan the cells on kill rectangle and record all the enemy soldiers
                     for (unsigned char i = 0; i < 2; ++i) {
                         if (x + (i * k) >= k) {
                             for (unsigned char j = 0; j < 2 * k; ++j) {
                                 if (y + j >= k) {
-                                    const Soldier* const soldier = m_soldiers(x + (i * k) - k, y + j - k);
-                                    if (soldier->army() != army) {
+                                    const Soldier& soldier = m_soldiers(x + (i * k) - k, y + j - k);
+                                    if (soldier.army() != army) {
                                         potentials.push_back(std::make_pair(i * k, j));
                                     }
                                 }
@@ -149,8 +156,8 @@ public:
                         if (y + (j * k) >= k) {
                             for (unsigned char i = 0; i < 2 * k; ++i) {
                                 if (x + i >= k) {
-                                    const Soldier* const soldier = m_soldiers(x + i - k, y + (j * k) - k);
-                                    if (soldier->army() != army) {
+                                    const Soldier& soldier = m_soldiers(x + i - k, y + (j * k) - k);
+                                    if (soldier.army() != army) {
                                         potentials.push_back(std::make_pair(i, j * k));
                                     }
                                 }
@@ -161,7 +168,7 @@ public:
                     unsigned char i = 0, j = 0;
                     // TODO: uniformly pick one soldier to attack out of all the enemies in kill range
                     // add to the kill probability of the soldier
-                    m_probability(x + i - k, y + j - k) += m_soldiers(x, y)->skill();
+                    m_probability(x + i - k, y + j - k) += m_soldiers(x, y).skill();
                 }
             }
         }
@@ -169,21 +176,21 @@ public:
         // actual kill loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
-                if (m_soldiers(x, y) != 0) {
-                    float s_self = m_soldiers(x, y)->skill();
+                if (!m_soldiers(x, y).empty()) {
+                    float s_self = m_soldiers(x, y).skill();
                     float p_survival = s_self / (m_probability(x, y) + s_self);
                     bool survives = true;
                     // TODO: decide if the soldier survives or not, based on the survival probability
                     if (!survives) {
                         // TODO: collect statistics for the soldier
                         // free the cell
-                        delete m_soldiers(x, y);
-                        m_soldiers(x, y) = 0;
+                        m_soldiers(x, y).kill();
                     }
                 }
             }
         }
     }
+
 
     /// Destructor
     ~FloorField()
@@ -207,7 +214,7 @@ private:
     void
     calculateLocalPreference(const std::size_t x, const std::size_t y, float (&m_l)[3][3]) const
     {
-        unsigned char army = m_soldiers(x, y)->army();
+        unsigned char army = m_soldiers(x, y).army();
 
         float sum = 0.0;
         // first store the neighbor counts in the k-neighborhood
@@ -238,23 +245,23 @@ private:
                                        const float (&m_g)[3][3], const float (&m_l)[3][3],
                                        float (&trans_prob)[3][3]) const
     {
-        const Soldier* const soldier = m_soldiers(x, y);
+        const Soldier& soldier = m_soldiers(x, y);
         // aggression of the soldier
-        float a = soldier->aggression();
+        float a = soldier.aggression();
         // happiness of the soldier is defined as the relative count of soldiers of the same army
-        float h = m_neighbors[soldier->army()](x, y);
-        h /= (m_neighbors[soldier->army()](x, y) + m_neighbors[soldier->enemy()](x, y));
+        float h = m_neighbors[soldier.army()](x, y);
+        h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
 
         float sum_prob = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
             for (unsigned char j = 0; j < 3; ++j) {
                 // check if the target cell is within bounds and is empty
-                if (((x + i) > 0) && ((y + j) > 0) && (m_soldiers(x + i - 1,  y + j - 1) == 0)) {
+                if (((x + i) > 0) && ((y + j) > 0) && (!m_soldiers(x + i - 1,  y + j - 1).empty())) {
                     // calculate actual matrix of preference for this index
                     float m_ij = a * m_g[i][j] + (1 - a) * (h * m_g[i][j] + (1 - h) * m_l[i][j]);
                     // calculate transitional probability
                     // TODO: use an accurate expression for calculating the probability
-                    trans_prob[i][j] = m_ij * m_dynamic[soldier->army()](x + i - 1, y + j - 1) * m_static(x + i - 1, y + j - 1);
+                    trans_prob[i][j] = m_ij * m_dynamic[soldier.army()](x + i - 1, y + j - 1) * m_static(x + i - 1, y + j - 1);
                 }
                 else {
                     // set transitional probability to 0.0 if the target cell is out of bounds or is occupied
@@ -298,7 +305,7 @@ private:
     std::size_t m_ncols;
 
     // grid for movement of the soldiers
-    matrix<Soldier*> m_soldiers;
+    matrix<Soldier> m_soldiers;
     // matrix for storing static floor field
     matrix<float> m_static;
     // matrix for storing dynamic floor fields, for both the armies
