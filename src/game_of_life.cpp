@@ -8,6 +8,8 @@
 #include "timer.hpp"
 #include "mpi_utils.hpp"
 #include "mpi_cellular_automata.hpp"
+#include "soldier.hpp"
+#include "floor_field.hpp"
 
 
 /* Setup timers */

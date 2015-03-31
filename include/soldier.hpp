@@ -9,6 +9,8 @@
 #ifndef SOLDIER_H
 #define SOLDIER_H
 
+#include <map>
+
 class Soldier {
 public:
     // enumeration type for specifying the type of this soldier
@@ -49,6 +51,13 @@ public:
         return m_army ? 1 : 0;
     }
 
+    /// returns index of the enemy army
+    unsigned char
+    enemy() const
+    {
+        return !m_army ? 1 : 0;
+    }
+
     /// returns aggression of this soldier as a fraction of the maximum aggression
     float
     aggression() const
@@ -67,9 +76,32 @@ public:
         return static_cast<float>(m_aggression) / max_skill;
     }
 
+    unsigned char
+    killRadius() const
+    {
+        return m_killRadiusMap[m_type];
+    }
+
     // Destructor
     ~Soldier()
     { }
+
+private:
+    // creates soldier type to kill radius map
+    static
+    std::map<Type, unsigned char>
+    createKillRadiusMap()
+    {
+        std::map<Type, unsigned char> killRadiusMap;
+        killRadiusMap[LEADER] = 1;
+        killRadiusMap[SWORDSMAN] = 1;
+        killRadiusMap[ARCHER] = 5;
+        return killRadiusMap;
+    }
+
+private:
+    // stores kill radii for different soldier types
+    static std::map<Type, unsigned char> m_killRadiusMap;
 
 private:
     // the army that this soldier belongs to
@@ -82,5 +114,7 @@ private:
     AggressionType m_aggression;
 
 }; // class Soldier
+
+std::map<Soldier::Type, unsigned char> Soldier::m_killRadiusMap = Soldier::createKillRadiusMap();
 
 #endif // SOLDIER_H
