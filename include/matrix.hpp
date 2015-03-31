@@ -97,9 +97,9 @@ public:
     }
 
 protected:
-    /// numer rows
+    /// number of rows
     std::size_t m;
-    /// number columns
+    /// number of columns
     std::size_t n;
     /// data of the matrix
     std::vector<T> m_data;
