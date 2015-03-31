@@ -256,7 +256,7 @@ private:
         for (unsigned char i = 0; i < 3; ++i) {
             for (unsigned char j = 0; j < 3; ++j) {
                 // check if the target cell is within bounds and is empty
-                if (((x + i) > 0) && ((y + j) > 0) && (!m_soldiers(x + i - 1,  y + j - 1).empty())) {
+                if (((x + i) > 0) && ((y + j) > 0) && ((x + i - 1) < m_nrows) && ((y + j - 1) < m_ncols) && (!m_soldiers(x + i - 1,  y + j - 1).empty())) {
                     // calculate actual matrix of preference for this index
                     float m_ij = a * m_g[i][j] + (1 - a) * (h * m_g[i][j] + (1 - h) * m_l[i][j]);
                     // calculate transitional probability
