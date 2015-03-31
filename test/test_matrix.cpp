@@ -54,10 +54,8 @@ TEST(MatrixTest, BorderMatrixInt) {
     mat(4,4) = 5;
 
     // check if elements return the same value
-    for (int i = 0; i < 5; ++i)
-    {
-        for (int j = 0; j < 5; ++j)
-        {
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
             // check with regular access
             if (i == j)
                 EXPECT_EQ(i+1, mat(i,j));
