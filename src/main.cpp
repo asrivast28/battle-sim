@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     int n_iter = 20;
     for (int i = 0; i < n_iter; ++i)
     {
-//        ff.move();
+        ff.move();
         std::cout << ff.mat() << std::endl;
         double sleep_secs = 0.5;
         usleep((unsigned int) (sleep_secs * 1000000));

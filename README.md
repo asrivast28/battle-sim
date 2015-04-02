@@ -22,4 +22,6 @@ Running the code
 After compiling, there will be multiple executable generated in the `bin`
 folder.
 
-TODO: usage of executables!
+Run `./bin/battle` to see a live battle with soooo much action. (Sorry,
+currently our soldiers won't listen to the battle call. Lazy bums!).
+
