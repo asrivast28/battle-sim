@@ -1,29 +1,45 @@
 
 #include <iostream>
-#include <floor_field.hpp>
 #include <unistd.h>
 
+#include "floor_field.hpp"
 
 int main(int argc, char *argv[])
 {
-    FloorField ff(10,10);
+    FloorField ff(20,20);
 
     srand(0);
 
+    Soldier::SkillType max_skill = 0;
+    max_skill = ~max_skill;
+    Soldier::AggressionType max_aggression = 0;
+    max_aggression = ~max_aggression;
+
     // set some soldiers of either type
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 20; ++i)
     {
-        ff.mat().at(1, 2*i + 1) = Soldier(0, Soldier::SWORDSMAN);
-        ff.mat().at(8, 2*i) = Soldier(1, Soldier::SWORDSMAN);
+        ff.mat().at(1, i) = Soldier(0, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
+        ff.mat().at(18, i) = Soldier(1, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
     }
+    ff.setTarget(0, 0, 5);
+    ff.setTarget(1, 10, 5); 
 
     int n_iter = 20;
+    double sleep_secs = 0.5;
+    std::cout << ff.mat() << std::endl;
+    usleep((unsigned int) (sleep_secs * 1000000));
     for (int i = 0; i < n_iter; ++i)
     {
+        std::cout << "------------------------------------------" << std::endl;
+
         ff.move();
         std::cout << ff.mat() << std::endl;
-        double sleep_secs = 0.5;
         usleep((unsigned int) (sleep_secs * 1000000));
+
+        ff.kill();
+        std::cout << ff.mat() << std::endl;
+        usleep((unsigned int) (sleep_secs * 1000000));
+
     }
 
     return 0;

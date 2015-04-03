@@ -24,9 +24,13 @@ public:
     /// Copy constructor
     matrix(const matrix<T>& o) : m(o.m), n(o.n), m_data(o.m_data) {}
 
-    /// emtpy initialization
+    /// empty initialization
     matrix(std::size_t nrows, std::size_t ncols)
         : m(nrows), n(ncols), m_data(n*m) {}
+
+    /// value initialization
+    matrix(std::size_t nrows, std::size_t ncols, const T& init)
+        : m(nrows), n(ncols), m_data(n*m, init) {}
 
     /// initialization with data
     matrix(std::size_t nrows, std::size_t ncols, const std::vector<T>& data)

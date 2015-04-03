@@ -35,9 +35,9 @@ public:
     { }
 
     /// constructor
-    Soldier(bool army, Type type)
-        : m_army(army), m_type(type),
-          m_skill(0), m_aggression(0)
+    Soldier(unsigned char army, Type type, SkillType skill = 0, AggressionType aggression = 0)
+        : m_army(army == 0), m_type(type),
+          m_skill(skill), m_aggression(aggression)
     { }
 
     /// copy constructor
@@ -57,18 +57,26 @@ public:
     unsigned char
     enemy() const
     {
-        return !m_army ? 1 : 0;
+        return m_army ? 0 : 1;
     }
 
-    // returns if this cell is empty
+    /// returns if this cell is empty
     bool
     empty() const
     {
         return m_type == EMPTY;
     }
 
+    /// kill off a soldier and set the object to empty
     void
     kill()
+    {
+        m_type = EMPTY;
+    }
+
+    /// clear off an object, technically the same as killing
+    void
+    clear()
     {
         m_type = EMPTY;
     }
@@ -91,18 +99,26 @@ public:
         return static_cast<float>(m_aggression) / max_skill;
     }
 
+    /// returns kill radius of this soldier
     unsigned char
     killRadius() const
     {
         return m_killRadiusMap[m_type];
     }
 
-    // Destructor
+    /// returns dynamic field of this soldier
+    unsigned char
+    field() const
+    {
+        return m_dynamicFieldMap[m_type];
+    }
+
+    /// destructor
     ~Soldier()
     { }
 
 private:
-    // creates soldier type to kill radius map
+    /// creates soldier type to kill radius map
     static
     std::map<Type, unsigned char>
     createKillRadiusMap()
@@ -114,9 +130,23 @@ private:
         return killRadiusMap;
     }
 
+    /// creates soldier type to dynamic field map
+    static
+    std::map<Type, unsigned char>
+    createDynamicFieldMap()
+    {
+        std::map<Type, unsigned char> dynamicFieldMap;
+        dynamicFieldMap[LEADER] = 10;
+        dynamicFieldMap[SWORDSMAN] = 1;
+        dynamicFieldMap[ARCHER] = 1;
+        return dynamicFieldMap;
+    }
+
 private:
     // stores kill radii for different soldier types
     static std::map<Type, unsigned char> m_killRadiusMap;
+    // stores dynamic field map
+    static std::map<Type, unsigned char> m_dynamicFieldMap;
 
 private:
     // the army that this soldier belongs to
@@ -130,7 +160,10 @@ private:
 
 }; // class Soldier
 
+// initialize kill radii map
 std::map<Soldier::Type, unsigned char> Soldier::m_killRadiusMap = Soldier::createKillRadiusMap();
+// initialize dynamic field map
+std::map<Soldier::Type, unsigned char> Soldier::m_dynamicFieldMap = Soldier::createDynamicFieldMap();
 
 std::ostream& operator<< (std::ostream& stream, const Soldier& t)
 {
