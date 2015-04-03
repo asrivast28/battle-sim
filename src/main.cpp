@@ -8,6 +8,8 @@ int main(int argc, char *argv[])
 {
     FloorField ff(10,10);
 
+    srand(0);
+
     // set some soldiers of either type
     for (int i = 0; i < 5; ++i)
     {

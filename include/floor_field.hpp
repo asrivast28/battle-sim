@@ -12,7 +12,59 @@
 #include "matrix.hpp"
 #include "soldier.hpp"
 
+#include <numeric>
 #include <vector>
+
+/// returns a uniform random number in the range [0.0, 1.0]
+/// TODO: replace with a more reliable random number generator
+float
+uniformRandom()
+{
+    return rand() / static_cast<float>(RAND_MAX);
+}
+
+// slightly modified version of http://stackoverflow.com/a/6852396
+// Assumes 0 <= max <= RAND_MAX
+// Returns in the half-open interval [0, max]
+int
+randomAtMax(int max) {
+    unsigned num_bins = static_cast<unsigned>(max) + 1;
+    // max <= RAND_MAX < ULONG_MAX, so this is okay.
+    unsigned num_rand = static_cast<unsigned>(RAND_MAX) + 1;
+    unsigned bin_size = num_rand / num_bins;
+    unsigned defect = num_rand % num_bins;
+
+    int x;
+    do {
+        x = rand();
+    }
+    // This is carefully written not to overflow
+    while ((num_rand - defect) <= static_cast<unsigned>(x));
+
+    // Truncated division is intentional
+    return x / static_cast<int>(bin_size);
+}
+
+
+
+/// uniformly picks an index from an array consisting of probability distribution
+std::size_t
+pickIndex(float* const prob_dist, const std::size_t max_index)
+{
+    std::partial_sum(prob_dist, prob_dist + max_index, prob_dist);
+    if (prob_dist[max_index - 1] != 1.0) {
+        throw std::runtime_error("Probability distribution doesn't add up to 1.0!");
+    }
+    double prob = uniformRandom();
+    double prev_val = 0.0;
+    for (std::size_t i = 0; i < max_index; ++i) {
+        if ((prob > prev_val) && (prob <= prob_dist[i])) {
+            return i;
+        }
+    }
+    throw std::runtime_error("Something went wrong while picking index!");
+}
+
 
 class FloorField {
 private:
@@ -35,10 +87,13 @@ public:
     }
 
     // access to the matrix of sodiers
-    const matrix<Soldier>& mat() const {
+    const matrix<Soldier>&
+    mat() const {
       return m_soldiers;
     }
-    matrix<Soldier>& mat() {
+
+    matrix<Soldier>&
+    mat() {
       return m_soldiers;
     }
 
@@ -46,11 +101,11 @@ public:
     move()
     {
         // global matrix of preference
-        float m_g[3][3];
+        float m_g[3 * 3];
         // local matrix of preference
-        float m_l[3][3];
+        float m_l[3 * 3];
         // transitional probability matrix
-        float trans_prob[3][3];
+        float trans_prob[3 * 3];
 
         // calculate the count of soldiers of both the armies in k-neighborhood
         // TODO: do this only once in the beginning and then only update later
@@ -87,12 +142,11 @@ public:
         // conflict resolution loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
-                // check if this cell is claimed by more than one soldiers
                 unsigned char claimed = m_claimed(x, y);
+                // resolve conflict only if this cell is claimed by more than one soldiers
                 if ((claimed > 0) && ((claimed & (claimed - 1)) != 0)) {
-                    unsigned char rel_prob[sizeof(unsigned char) * 8];
-                    unsigned char b = 1;
-                    for (unsigned char a = 1; a <= 8; ++a) {
+                    float rel_prob[sizeof(unsigned char) * 8];
+                    for (unsigned char a = 1, b = 1; a <= 8; ++a, b = b << 1) {
                         if ((claimed & b) != 0) {
                             unsigned char i = a / 3;
                             unsigned char j = a % 3;
@@ -101,7 +155,6 @@ public:
                         else {
                             rel_prob[a] = 0.0;
                         }
-                        b = b << 1;
                     }
                     unsigned char index = 8;
                     // TODO: choose one of the claimants as the "lucky" one, based on the relative probabilities
@@ -143,7 +196,7 @@ public:
                     for (unsigned char i = 0; i < 2; ++i) {
                         if (x + (i * k) >= k) {
                             for (unsigned char j = 0; j < 2 * k; ++j) {
-                                if (y + j >= k) {
+                                if (y + j >= k && (y + j - k < m_nrows)) {
                                     const Soldier& soldier = m_soldiers(x + (i * k) - k, y + j - k);
                                     if (soldier.army() != army) {
                                         potentials.push_back(std::make_pair(i * k, j));
@@ -165,8 +218,9 @@ public:
                         }
                     }
                     // relative index of the chosen enemy
-                    unsigned char i = 0, j = 0;
-                    // TODO: uniformly pick one soldier to attack out of all the enemies in kill range
+                    unsigned char index = static_cast<unsigned char>(randomAtMax(potentials.size()));
+                    unsigned char i = index / k;
+                    unsigned char j = index % k;
                     // add to the kill probability of the soldier
                     m_probability(x + i - k, y + j - k) += m_soldiers(x, y).skill();
                 }
@@ -179,11 +233,12 @@ public:
                 if (!m_soldiers(x, y).empty()) {
                     float s_self = m_soldiers(x, y).skill();
                     float p_survival = s_self / (m_probability(x, y) + s_self);
-                    bool survives = true;
-                    // TODO: decide if the soldier survives or not, based on the survival probability
+                    // pick a uniform random number in the range [0.0, 1.0]
+                    // kill the soldier if the chosen number is greater than the probability of survival
+                    bool survives = uniformRandom() < p_survival;
                     if (!survives) {
-                        // TODO: collect statistics for the soldier
-                        // free the cell
+                        // TODO: collect statistics for the soldier before killing
+                        // kill the soldier
                         m_soldiers(x, y).kill();
                     }
                 }
@@ -199,7 +254,7 @@ public:
 private:
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
-    calculateGlobalPreference(const std::size_t x, const std::size_t y, float (&m_g)[3][3]) const
+    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const m_g) const
     {
         // target coordinates
         std::size_t target_x = 0, target_y = 0;
@@ -212,7 +267,7 @@ private:
 
     /// computes local preference matrix for a soldier, based on extended neighborhood
     void
-    calculateLocalPreference(const std::size_t x, const std::size_t y, float (&m_l)[3][3]) const
+    calculateLocalPreference(const std::size_t x, const std::size_t y, float* const m_l) const
     {
         unsigned char army = m_soldiers(x, y).army();
 
@@ -221,12 +276,12 @@ private:
         for (unsigned char i = 0; i < 3; ++i) {
             for (unsigned char j = 0; j < 3; ++j) {
                 if (((x + i) > m_k) && ((y + j) > m_k)) {
-                    m_l[i][j] = m_neighbors[army](x + i - 1 + m_k, y + j - 1 + m_k);
+                    m_l[i * 3 + j] = m_neighbors[army](x + i - 1 + m_k, y + j - 1 + m_k);
                 }
                 else {
-                    m_l[i][j] = 0.0;
+                    m_l[i * 3 + j] = 0.0;
                 }
-                sum += m_l[i][j];
+                sum += m_l[i * 3 + j];
             }
         }
 
@@ -234,7 +289,7 @@ private:
         // TODO: ensure that all the values in the matrix are non-zero
         for (unsigned char i = 0; i < 3; ++i) {
             for (unsigned char j = 0; j < 3; ++j) {
-                m_l[i][j] /= sum;
+                m_l[i * 3 + j] /= sum;
             }
         }
     }
@@ -242,8 +297,8 @@ private:
     /// calculate transitional probabilities for a soldier, based on a soldier attributes, local and global preference matrix
     void
     calculateTransitionalProbabilities(const std::size_t x, const std::size_t y,
-                                       const float (&m_g)[3][3], const float (&m_l)[3][3],
-                                       float (&trans_prob)[3][3]) const
+                                       const float* const m_g, const float* const m_l,
+                                       float* const trans_prob) const
     {
         const Soldier& soldier = m_soldiers(x, y);
         // aggression of the soldier
@@ -258,43 +313,42 @@ private:
                 // check if the target cell is within bounds and is empty
                 if (((x + i) > 0) && ((y + j) > 0) && ((x + i - 1) < m_nrows) && ((y + j - 1) < m_ncols) && (!m_soldiers(x + i - 1,  y + j - 1).empty())) {
                     // calculate actual matrix of preference for this index
-                    float m_ij = a * m_g[i][j] + (1 - a) * (h * m_g[i][j] + (1 - h) * m_l[i][j]);
+                    float m_ij = a * m_g[i * 3 + j] + (1 - a) * (h * m_g[i * 3 + j] + (1 - h) * m_l[i * 3 + j]);
                     // calculate transitional probability
                     // TODO: use an accurate expression for calculating the probability
-                    trans_prob[i][j] = m_ij * m_dynamic[soldier.army()](x + i - 1, y + j - 1) * m_static(x + i - 1, y + j - 1);
+                    trans_prob[i * 3 + j] = m_ij * m_dynamic[soldier.army()](x + i - 1, y + j - 1) * m_static(x + i - 1, y + j - 1);
                 }
                 else {
                     // set transitional probability to 0.0 if the target cell is out of bounds or is occupied
-                    trans_prob[i][j] = 0.0;
+                    trans_prob[i * 3 + j] = 0.0;
                 }
-                sum_prob += trans_prob[i][j];
+                sum_prob += trans_prob[i * 3 + j];
             }
         }
 
         // normalize the probabilities now so that the sum is 1.0
-        for (unsigned char i = 0; i < 3; ++i) {
-            for (unsigned char j = 0; j < 3; ++j) {
-                trans_prob[i][j] /= sum_prob;
-            }
+        for (unsigned char i = 0; i < 3 * 3; ++i) {
+            trans_prob[i] /= sum_prob;
         }
     }
 
     /// claim a cell for a soldier to which it wants to move in this timestep
     void
-    claimCell(const std::size_t x, const std::size_t y, const float (&trans_prob)[3][3])
+    claimCell(const std::size_t x, const std::size_t y, float* const trans_prob)
     {
         // relative index of the target cell
-        unsigned char i = 0, j = 0;
-        // TODO: pick a cell (i, j) to move to, based on transitional probabilities
+        unsigned char index = static_cast<unsigned char>(pickIndex(trans_prob, 3 * 3));
 
         // if the soldier wants to move to another cell, (i, j) != (1, 1)
-        if ((i != 1) || (j != 1)) {
+        if (index != 4) {
+            unsigned char i = index / 3;
+            unsigned char j = index % 3;
             // store the probability with which the soldier wants to move to the target cell
-            m_probability(x, y) = trans_prob[i][j];
+            m_probability(x, y) = trans_prob[i * 3 + j];
             // also set the bit corresponding to this soldier in the target cell
             // first find the index of this cell relative to the target cell
-            unsigned char index = (3 * i + j) - ((3 * i + j) / 5);
-            m_claimed(x + i - 1, y + j - 1) = m_claimed(x + i - 1, y + j - 1) | (1 << index);
+            unsigned char bit_index = (3 * i + j) - ((3 * i + j) / 5);
+            m_claimed(x + i - 1, y + j - 1) = m_claimed(x + i - 1, y + j - 1) | (1 << bit_index);
         }
     }
 

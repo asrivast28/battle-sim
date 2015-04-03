@@ -61,12 +61,14 @@ public:
     }
 
     // returns if this cell is empty
-    bool empty() const
+    bool
+    empty() const
     {
         return m_type == EMPTY;
     }
 
-    void kill()
+    void
+    kill()
     {
         m_type = EMPTY;
     }
