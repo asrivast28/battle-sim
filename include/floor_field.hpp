@@ -145,19 +145,32 @@ public:
                 unsigned char claimed = m_claimed(x, y);
                 // resolve conflict only if this cell is claimed by more than one soldiers
                 if ((claimed > 0) && ((claimed & (claimed - 1)) != 0)) {
-                    float rel_prob[sizeof(unsigned char) * 8];
-                    for (unsigned char a = 1, b = 1; a <= 8; ++a, b = b << 1) {
+                    unsigned char max_size = sizeof(unsigned char) * 8;
+                    float sum_prob = 0.0;
+                    float rel_prob[max_size];
+                    for (unsigned char a = 0, b = 1; a < max_size; ++a, b = b << 1) {
                         if ((claimed & b) != 0) {
-                            unsigned char i = a / 3;
-                            unsigned char j = a % 3;
+                            // find the relative index of this cell relative to the cell that set this bit
+                            unsigned char s = a + a / 4;
+                            unsigned char i = s / 3;
+                            unsigned char j = s % 3;
+                            // now calculate the relative index of the cell that set this bit
+                            i = (i + 1) % 3;
+                            j = (j + 1) % 3;
+                            // store the probability with which this bit was set
                             rel_prob[a] = m_probability(x + i - 1, y + j - 1);
                         }
                         else {
                             rel_prob[a] = 0.0;
                         }
+                        sum_prob += rel_prob[a];
                     }
-                    unsigned char index = 8;
-                    // TODO: choose one of the claimants as the "lucky" one, based on the relative probabilities
+                    // normalize the probabilities
+                    for (unsigned char a = 0; a < 8; ++a) {
+                        rel_prob[a] /= sum_prob;
+                    }
+                    // choose one of the claimants as the "lucky" one, based on the relative probabilities
+                    unsigned char index = static_cast<unsigned char>(pickIndex(rel_prob, max_size));
                     m_claimed(x, y) = 1 << index;
                 }
                 // TODO: decay the dynamic field in this cell
@@ -219,8 +232,8 @@ public:
                     }
                     // relative index of the chosen enemy
                     unsigned char index = static_cast<unsigned char>(randomAtMax(potentials.size()));
-                    unsigned char i = index / k;
-                    unsigned char j = index % k;
+                    unsigned char i = potentials[index].first;
+                    unsigned char j = potentials[index].second;
                     // add to the kill probability of the soldier
                     m_probability(x + i - k, y + j - k) += m_soldiers(x, y).skill();
                 }
