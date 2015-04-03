@@ -17,6 +17,13 @@ if(UNIX)
     set(CMAKE_LIBRARY_PATH "${CMAKE_LIBRARY_PATH} /lib /usr/lib")
 endif()
 
+# Changes for compiling on Mac
+if(APPLE)
+    set(MPI_C_LIBRARIES "/opt/local/lib/openmpi-mp")
+    set(MPI_CXX_LIBRARIES "/opt/local/lib/openmpi-mp")
+    set(MPI_INCLUDE_PATH "/opt/local/include/openmpi-mp")
+endif()
+
 # --------------------------------------------------------------
 # Indicate CMake 2.7 and above that we don't want to mix relative
 #  and absolute paths in linker lib lists.
