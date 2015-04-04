@@ -127,9 +127,9 @@ public:
     move()
     {
         // global matrix of preference
-        float m_g[3 * 3] = {};
+        float mat_g[3 * 3] = {};
         // local matrix of preference
-        float m_l[3 * 3] = {};
+        float mat_l[3 * 3] = {};
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
 
@@ -142,7 +142,9 @@ public:
                     if ((x + i >= m_k) && (x + i - m_k < m_nrows)) {
                         for (unsigned char j = 0; j < 2 * m_k; ++j) {
                             if ((y + j >= m_k) && (y + j - m_k < m_ncols)) {
-                                ++neighbors[m_soldiers(x + i - m_k, y + j - m_k).army()];
+                                if (!m_soldiers(x + i - m_k, y + j - m_k).empty()) {
+                                    ++neighbors[m_soldiers(x + i - m_k, y + j - m_k).army()];
+                                }
                             }
                         }
                     }
@@ -157,9 +159,9 @@ public:
             for (std::size_t y = 0; y < m_ncols; ++y) {
                 // do the calculations only if there is a soldier in the current cell
                 if (!m_soldiers(x, y).empty()) {
-                    calculateGlobalPreference(x, y, m_g);
-                    calculateLocalPreference(x, y, m_l);
-                    calculateTransitionalProbabilities(x, y, m_g, m_l, trans_prob);
+                    calculateGlobalPreference(x, y, mat_g);
+                    calculateLocalPreference(x, y, mat_l);
+                    calculateTransitionalProbabilities(x, y, mat_g, mat_l, trans_prob);
                     claimCell(x, y, trans_prob);
                 }
             }
@@ -306,7 +308,7 @@ public:
 private:
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
-    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const m_g) const
+    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g) const
     {
         unsigned char army = m_soldiers(x, y).army();
 
@@ -318,7 +320,7 @@ private:
               for (unsigned char j = 0; j < 3; ++j) {
                   std::size_t diff_y = m_target_y[army] > (y + j) ? (m_target_y[army] - (y + j - 1)) : ((y + j - 1) - m_target_y[army]);  
                   float distance = sqrt(pow(diff_x, 2.0) + pow(diff_y, 2.0));
-                  m_g[i * 3 + j] = distance;
+                  mat_g[i * 3 + j] = distance;
                   sum_distance += distance;
                   if (max_distance < distance) {
                       max_distance = distance;
@@ -330,14 +332,14 @@ private:
         // TODO: ensure that all the values in the matrix are non-zero
         sum_distance = (3 * 3 * max_distance) - sum_distance;
         for (unsigned char i = 0; i < 3 * 3; ++i) {
-            m_g[i] = max_distance - m_g[i];
-            m_g[i] /= sum_distance;
+            mat_g[i] = max_distance - mat_g[i];
+            mat_g[i] /= sum_distance;
         }
     }
 
     /// computes local preference matrix for a soldier, based on extended neighborhood
     void
-    calculateLocalPreference(const std::size_t x, const std::size_t y, float* const m_l) const
+    calculateLocalPreference(const std::size_t x, const std::size_t y, float* const mat_l) const
     {
         unsigned char army = m_soldiers(x, y).army();
 
@@ -349,9 +351,9 @@ private:
                 for (unsigned char j = 0; j < 3; ++j) {
                     // check the column bounds
                     if ((y + m_k * j > m_k) && (y + m_k * (j - 1) < m_ncols)) {
-                        m_l[i * 3 + j] = m_neighbors[army](x + m_k * (i - 1), y + m_k * (j - 1));
+                        mat_l[i * 3 + j] = m_neighbors[army](x + m_k * (i - 1), y + m_k * (j - 1));
                     }
-                    sum_neighbors += m_l[i * 3 + j];
+                    sum_neighbors += mat_l[i * 3 + j];
                 }
             }
         }
@@ -359,14 +361,14 @@ private:
         // now normalize based on the total sum of counts
         // TODO: ensure that all the values in the matrix are non-zero
         for (unsigned char i = 0; i < 3 * 3; ++i) {
-            m_l[i] /= sum_neighbors;
+            mat_l[i] /= sum_neighbors;
         }
     }
 
     /// calculate transitional probabilities for a soldier, based on a soldier attributes, local and global preference matrix
     void
     calculateTransitionalProbabilities(const std::size_t x, const std::size_t y,
-                                       float* const m_g, float* const m_l,
+                                       float* const mat_g, float* const mat_l,
                                        float* const trans_prob) const
     {
         const Soldier& soldier = m_soldiers(x, y);
@@ -385,15 +387,15 @@ private:
                     if ((y + j >= 1) && (y + j - 1 < m_ncols)) {
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
-                            float m_ij = a * m_g[i * 3 + j] + (1 - a) * (h * m_g[i * 3 + j] + (1 - h) * m_l[i * 3 + j]);
+                            float mat_ij = a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]);
                             // calculate transitional probability
                             // TODO: refine the following expression?
-                            assert (m_ij >= 0);
-                            trans_prob[i * 3 + j] = m_ij * exp(m_dynamic[soldier.army()](x + i - 1, y + j - 1)) * exp(m_static(x + i - 1, y + j - 1));
+                            assert (mat_ij >= 0);
+                            trans_prob[i * 3 + j] = mat_ij * exp(m_dynamic[soldier.army()](x + i - 1, y + j - 1)) * exp(m_static(x + i - 1, y + j - 1));
 
                             // reset global and local matrix of preference
-                            m_g[i * 3 + j] = 0.0;
-                            m_l[i * 3 + j] = 0.0;
+                            mat_g[i * 3 + j] = 0.0;
+                            mat_l[i * 3 + j] = 0.0;
                         }
                     }
                     sum_prob += trans_prob[i * 3 + j];
