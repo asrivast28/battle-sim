@@ -252,5 +252,21 @@ std::ostream& operator<< (std::ostream& stream, const matrix<T>& mat)
     return stream;
 }
 
+template<>
+std::ostream& operator<< (std::ostream& stream, const matrix<unsigned char>& mat)
+{
+    for (std::size_t i = 0; i < mat.nrows(); ++i)
+    {
+        stream << "[";
+        for (std::size_t j = 0; j < mat.ncols(); ++j)
+        {
+            if (j != 0)
+                stream << " ";
+            stream << static_cast<unsigned>(mat(i,j));
+        }
+        stream << "]" << std::endl;
+    }
+    return stream;
+}
 
 #endif // MATRIXH_HPP
