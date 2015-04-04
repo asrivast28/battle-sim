@@ -123,36 +123,28 @@ public:
         m_target_y[army] = target_y;
     }
 
+    /// initializes the extended neighborhood counts
     void
-    move()
+    initializeNeighborhood()
     {
+        // calculate the initial count of soldiers of both the armies in k-neighborhood
+        for (std::size_t x = 0; x < m_nrows; ++x) {
+            for (std::size_t y = 0; y < m_ncols; ++y) {
+                if (!m_soldiers(x, y).empty()) {
+                    updateNeighborCounts(x, y, m_soldiers(x, y).army(), true);
+                }
+            }
+        }
+    }
+
+    void
+    move() {
         // global matrix of preference
         float mat_g[3 * 3] = {};
         // local matrix of preference
         float mat_l[3 * 3] = {};
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
-
-        // calculate the count of soldiers of both the armies in k-neighborhood
-        // TODO: do this only once in the beginning and then only update later
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
-                unsigned char neighbors[2] = {};
-                for (unsigned char i = 0; i < 2 * m_k; ++i) {
-                    if ((x + i >= m_k) && (x + i - m_k < m_nrows)) {
-                        for (unsigned char j = 0; j < 2 * m_k; ++j) {
-                            if ((y + j >= m_k) && (y + j - m_k < m_ncols)) {
-                                if (!m_soldiers(x + i - m_k, y + j - m_k).empty()) {
-                                    ++neighbors[m_soldiers(x + i - m_k, y + j - m_k).army()];
-                                }
-                            }
-                        }
-                    }
-                }
-                m_neighbors[0](x, y) = neighbors[0];
-                m_neighbors[1](x, y) = neighbors[1];
-            }
-        }
 
         // claim-a-cell loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
@@ -218,6 +210,10 @@ public:
                     const Soldier& s = m_soldiers(x + i - 1, y + j - 1);
                     m_soldiers(x, y) = s;
                     m_soldiers(x + i - 1, y + j - 1).clear();
+                    // increase neighbor count in the new neighborhood
+                    updateNeighborCounts(x, y, s.army(), true);
+                    // decrease neighbor count in the old neighborhood
+                    updateNeighborCounts(x + i - 1, y + j - 1, s.army(), false);
 
                     //DEBUG_MSG("Soldier at index (%zd, %zd) moving to (%zd, %zd)\n", x + i - 1, y + j - 1, x, y);
 
@@ -294,6 +290,7 @@ public:
                         // TODO: collect statistics for the soldier before killing
                         // kill the soldier
                         //DEBUG_MSG("killing (%zd, %zd)\n", x, y);
+                        updateNeighborCounts(x, y, m_soldiers(x, y).army(), false);
                         m_soldiers(x, y).kill();
                     }
                 }
@@ -306,6 +303,24 @@ public:
     { }
 
 private:
+    /// increase or decrease extended neighborhood counts for a cell
+    void
+    updateNeighborCounts(const std::size_t x, const std::size_t y, const unsigned char army, const bool increase)
+    {
+        for (unsigned char i = 0; i < 2 * m_k; ++i) {
+            // decrease neighbor count in the neighborhood
+            if ((x + i >= m_k) && (x + i - m_k < m_nrows)) {
+                for (unsigned char j = 0; j < 2 * m_k; ++j) {
+                    if ((y + j >= m_k) && (y + j - m_k < m_ncols)) {
+                        // there is something wrong if we are trying to decrease neighbor count when it is 0
+                        assert(increase || (m_neighbors[army](x + i - m_k, y + j - m_k) > 0));
+                        m_neighbors[army](x + i - m_k, y + j - m_k) += (increase ? 1 : -1);
+                    }
+                }
+            }
+        }
+    }
+
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
     calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g) const

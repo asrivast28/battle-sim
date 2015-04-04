@@ -24,6 +24,9 @@ int main(int argc, char *argv[])
     ff.setTarget(0, 0, 5);
     ff.setTarget(1, 10, 5); 
 
+    // MUST be called before the start of iterations
+    ff.initializeNeighborhood();
+
     int n_iter = 20;
     double sleep_secs = 0.5;
     std::cout << ff.mat() << std::endl;
