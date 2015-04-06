@@ -18,8 +18,10 @@ int main(int argc, char *argv[])
     // set some soldiers of either type
     for (int i = 0; i < 20; ++i)
     {
+        ff.mat().at(0, i) = Soldier(0, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
         ff.mat().at(1, i) = Soldier(0, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
         ff.mat().at(18, i) = Soldier(1, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
+        ff.mat().at(19, i) = Soldier(1, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
     }
     ff.setTarget(0, 0, 5);
     ff.setTarget(1, 10, 5); 
