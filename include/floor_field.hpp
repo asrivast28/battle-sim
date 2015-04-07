@@ -418,9 +418,15 @@ private:
             }
         }
 
-        // normalize the probabilities now so that the sum is 1.0
-        for (unsigned char i = 0; i < 3 * 3; ++i) {
-            trans_prob[i] /= sum_prob;
+        if (std::fabs(sum_prob - 0.0) < FLOAT_EPSILON) {
+            // set probability of staying put to 1.0
+            trans_prob[1 * 3 + 1] = 1.0;
+        }
+        else {
+            // normalize the probabilities now so that the sum is 1.0
+            for (unsigned char i = 0; i < 3 * 3; ++i) {
+                trans_prob[i] /= sum_prob;
+            }
         }
     }
 
