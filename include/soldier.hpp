@@ -36,7 +36,7 @@ public:
 
     /// constructor
     Soldier(unsigned char army, Type type, SkillType skill = 0, AggressionType aggression = 0)
-        : m_army(army == 0), m_type(type),
+        : m_army(army == 1), m_type(type),
           m_skill(skill), m_aggression(aggression)
     { }
 
