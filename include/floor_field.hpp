@@ -116,6 +116,17 @@ public:
         return m_soldiers;
     }
 
+    // print the matrix
+    void
+    printGrid() const {
+        std::cout << m_soldiers << std::endl;
+    }
+
+    void
+    setSoldier(std::size_t x, std::size_t y, const Soldier& soldier) {
+        m_soldiers.at(x, y) = soldier;
+    }
+
     void
     setTarget(const unsigned char army, const std::size_t target_x, const std::size_t target_y)
     {
@@ -346,9 +357,11 @@ private:
         // subtract the minimum distance from all the distances and then normalize
         // TODO: ensure that all the values in the matrix are non-zero
         sum_distance = (3 * 3 * max_distance) - sum_distance;
-        for (unsigned char i = 0; i < 3 * 3; ++i) {
-            mat_g[i] = max_distance - mat_g[i];
-            mat_g[i] /= sum_distance;
+        if (std::fabs(sum_distance - 0.0) > FLOAT_EPSILON) {
+            for (unsigned char i = 0; i < 3 * 3; ++i) {
+                mat_g[i] = max_distance - mat_g[i];
+                mat_g[i] /= sum_distance;
+            }
         }
     }
 
@@ -373,10 +386,12 @@ private:
             }
         }
 
-        // now normalize based on the total sum of counts
-        // TODO: ensure that all the values in the matrix are non-zero
-        for (unsigned char i = 0; i < 3 * 3; ++i) {
-            mat_l[i] /= sum_neighbors;
+        if (std::fabs(sum_neighbors - 0.0) > FLOAT_EPSILON) {
+            // now normalize based on the total sum of counts
+            // TODO: ensure that all the values in the matrix are non-zero
+            for (unsigned char i = 0; i < 3 * 3; ++i) {
+                mat_l[i] /= sum_neighbors;
+            }
         }
     }
 
