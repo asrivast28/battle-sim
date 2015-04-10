@@ -1,18 +1,23 @@
 import battlesim
+from battlesim import Soldier, FloorField
+
 import numpy
 from random import randint, seed
 from time import sleep
 
 seed(0)
 
-H, W = 600, 600
+H, W = 200, 200
 
-ff = battlesim.FloorField(H, W)
+accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
+ff = FloorField(accessibility)
+#ff = FloorField(H, W)
+
 for y in xrange(0, W):
-    ff.setSoldier(0, y, battlesim.Soldier(0, battlesim.Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
-    ff.setSoldier(1, y, battlesim.Soldier(0, battlesim.Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
-    ff.setSoldier(H - 2, y, battlesim.Soldier(1, battlesim.Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
-    ff.setSoldier(H - 1, y, battlesim.Soldier(1, battlesim.Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
+    ff.setSoldier(0, y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
+    ff.setSoldier(1, y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
+    ff.setSoldier(H - 2, y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
+    ff.setSoldier(H - 1, y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
 #ff.printGrid()
 
 ff.setTarget(0, H, W / 2)
@@ -34,8 +39,8 @@ def make_frame(t):
     else:
         ff.kill()
     i += 1
-    surface = gizeh.Surface(H, W)
     image = surface.get_npimage()
+    surface = gizeh.Surface(H, W, bg_color = (255, 255, 255))
     ff.armyGrid(army_grid)
     it = numpy.nditer(army_grid, op_flags = ['readwrite'], flags = ['multi_index'])
     while not it.finished:
