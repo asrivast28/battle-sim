@@ -123,6 +123,17 @@ public:
     }
 
     void
+    armyGrid(std::size_t dim1, std::size_t dim2, unsigned char* grid) const {
+        for (std::size_t x = 0; x < dim1; ++x) {
+            for (std::size_t y = 0; y < dim2; ++y) {
+                if (!m_soldiers(x, y).empty()) {
+                    grid[x * m_ncols + y] = m_soldiers(x, y).army();
+                }
+            }
+        }
+    }
+
+    void
     setSoldier(std::size_t x, std::size_t y, const Soldier& soldier) {
         m_soldiers.at(x, y) = soldier;
     }
