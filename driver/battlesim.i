@@ -36,6 +36,7 @@ public:
 class FloorField {
 public:
   FloorField(std::size_t, std::size_t);
+  FloorField(std::size_t, std::size_t, unsigned char*);
   void move();
   void kill();
   void setSoldier(std::size_t, std::size_t, const Soldier&);
@@ -45,3 +46,4 @@ public:
   void printGrid();
   ~FloorField();
 };
+%clear (std::size_t, std::size_t, unsigned char*);
