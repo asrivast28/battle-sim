@@ -55,6 +55,7 @@ randomAtMax(int max) {
     return x / static_cast<int>(bin_size);
 }
 
+// granulaty of measurement for float types
 const float FLOAT_EPSILON = std::numeric_limits<float>::epsilon();
 /// uniformly picks an index from an array consisting of probability distribution
 std::size_t
@@ -458,6 +459,7 @@ private:
                     if ((y + j >= 1) && (y + j - 1 < m_ncols)) {
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
+// 				TODO refine the following expression to give preference to the current dir
                             float mat_ij = a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]);
                             // calculate transitional probability
                             // TODO: refine the following expression?
