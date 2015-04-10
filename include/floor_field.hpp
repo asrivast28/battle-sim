@@ -87,7 +87,7 @@ private:
 public:
     FloorField(std::size_t nrows, std::size_t ncols)
         : m_nrows(nrows), m_ncols(ncols),
-          m_soldiers(nrows, ncols), m_static(nrows, ncols),
+          m_soldiers(nrows, ncols), m_static(nrows, ncols, 1.0),
           m_claimed(nrows, ncols), m_probability(nrows, ncols)
     {
         // initialize the target coordinates
@@ -433,7 +433,7 @@ private:
                             // calculate transitional probability
                             // TODO: refine the following expression?
                             assert (mat_ij >= 0);
-                            trans_prob[i * 3 + j] = mat_ij * exp(m_dynamic[soldier.army()](x + i - 1, y + j - 1)) * exp(m_static(x + i - 1, y + j - 1));
+                            trans_prob[i * 3 + j] = mat_ij * m_dynamic[soldier.army()](x + i - 1, y + j - 1) * m_static(x + i - 1, y + j - 1);
 
                             // reset global and local matrix of preference
                             mat_g[i * 3 + j] = 0.0;
