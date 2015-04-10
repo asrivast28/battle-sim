@@ -71,6 +71,7 @@ pickIndex(float* const prob_dist, const std::size_t max_index)
         if ((prob > prev_val) && ((prob <= prob_dist[i]))) {
             return i;
         }
+        prev_val = prob_dist[i];
     }
     throw std::runtime_error("Something went wrong while picking index!");
 }
