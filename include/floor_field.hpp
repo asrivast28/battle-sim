@@ -87,7 +87,7 @@ private:
 public:
     FloorField(std::size_t nrows, std::size_t ncols)
         : m_nrows(nrows), m_ncols(ncols),
-          m_soldiers(nrows, ncols), m_static(nrows, ncols, 1.0),
+          m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
           m_claimed(nrows, ncols), m_probability(nrows, ncols)
     {
         // initialize the target coordinates
@@ -98,8 +98,29 @@ public:
         m_target_y[1] = 0;
 
         // initialize the dynamic field matrices
-        m_dynamic[0] = matrix<float>(nrows, ncols);
-        m_dynamic[1] = matrix<float>(nrows, ncols);
+        m_dynamic[0] = matrix<unsigned char>(nrows, ncols, 1);
+        m_dynamic[1] = matrix<unsigned char>(nrows, ncols, 1);
+
+        // initialize the extended neighborhood counts
+        m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
+        m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
+    }
+
+    FloorField(std::size_t nrows, std::size_t ncols, unsigned char* accessibility)
+        : m_nrows(nrows), m_ncols(ncols),
+          m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
+          m_claimed(nrows, ncols), m_probability(nrows, ncols)
+    {
+        // initialize the target coordinates
+        m_target_x[0] = 0;
+        m_target_y[0] = 0;
+
+        m_target_x[1] = 0;
+        m_target_y[1] = 0;
+
+        // initialize the dynamic field matrices
+        m_dynamic[0] = matrix<unsigned char>(nrows, ncols, 1);
+        m_dynamic[1] = matrix<unsigned char>(nrows, ncols, 1);
 
         // initialize the extended neighborhood counts
         m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
@@ -214,8 +235,16 @@ public:
                     m_claimed(x, y) = 1 << index;
                 }
                 // decay the dynamic field in this cell
+                // minimum dynamic field in any cell is 1
+                // we don't want dynamic field going to 0 now, do we?
                 m_dynamic[0](x, y) = m_dynamic[0](x, y) * exp(-1.0 * static_cast<double>(m_beta));
+                if (m_dynamic[0](x, y) == 0) {
+                    m_dynamic[0](x, y) = 1;
+                }
                 m_dynamic[1](x, y) = m_dynamic[1](x, y) * exp(-1.0 * static_cast<double>(m_beta));
+                if (m_dynamic[1](x, y) == 0) {
+                    m_dynamic[1](x, y) = 1;
+                }
             }
         }
 
@@ -433,7 +462,7 @@ private:
                             // calculate transitional probability
                             // TODO: refine the following expression?
                             assert (mat_ij >= 0);
-                            trans_prob[i * 3 + j] = mat_ij * m_dynamic[soldier.army()](x + i - 1, y + j - 1) * m_static(x + i - 1, y + j - 1);
+                            trans_prob[i * 3 + j] = mat_ij * (m_dynamic[soldier.army()](x + i - 1, y + j - 1) / 255.0) * (m_static(x + i - 1, y + j - 1) / 255.0);
 
                             // reset global and local matrix of preference
                             mat_g[i * 3 + j] = 0.0;
@@ -496,9 +525,9 @@ private:
     // grid for movement of the soldiers
     matrix<Soldier> m_soldiers;
     // matrix for storing static floor field
-    matrix<float> m_static;
+    matrix<unsigned char> m_static;
     // matrix for storing dynamic floor fields, for both the armies
-    matrix<float> m_dynamic[2];
+    matrix<unsigned char> m_dynamic[2];
 
     // matrix for storing extended neighborhood counts, for both the armies
     matrix<unsigned char> m_neighbors[2];
