@@ -387,11 +387,11 @@ private:
         // first store the neighbor counts in the k-neighborhood
         for (unsigned char i = 0; i < 3; ++i) {
             // check the row bounds
-            if ((x + m_k * i > m_k) && (x + m_k * (i - 1) < m_nrows)) {
+            if ((x + i * m_k >= m_k) && (x +  i * m_k - m_k < m_nrows)) {
                 for (unsigned char j = 0; j < 3; ++j) {
                     // check the column bounds
-                    if ((y + m_k * j > m_k) && (y + m_k * (j - 1) < m_ncols)) {
-                        mat_l[i * 3 + j] = m_neighbors[army](x + m_k * (i - 1), y + m_k * (j - 1));
+                    if ((y + j * m_k >= m_k) && (y + j * m_k - m_k < m_ncols)) {
+                        mat_l[i * 3 + j] = m_neighbors[army](x + i * m_k - m_k, y + j * m_k - m_k);
                     }
                     sum_neighbors += mat_l[i * 3 + j];
                 }
