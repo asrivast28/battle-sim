@@ -5,11 +5,19 @@ import numpy
 from random import randint, seed
 from time import sleep
 
+import gizeh
+import moviepy.editor as mpy
+
+
 seed(0)
 
 H, W = 200, 200
 
 accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
+for x in xrange(90, 110):
+    for y in xrange(90, 110):
+        accessibility[x][y] = 0
+
 ff = FloorField(accessibility)
 #ff = FloorField(H, W)
 
@@ -25,10 +33,16 @@ ff.setTarget(1, 0, W / 2)
 
 ff.initializeNeighborhood()
 
-army_grid = numpy.full((H, W), -1, dtype = numpy.uint8)
+army = numpy.full((H, W), -1, dtype = numpy.uint8)
 
-import gizeh
-import moviepy.editor as mpy
+obstructions = []
+it = numpy.nditer(accessibility, op_flags = ['readonly'], flags = ['multi_index'])
+while not it.finished:
+    if it[0] != 255:
+        color = list(it[0] / 255.0 for x in xrange(3))
+        obstructions.append(gizeh.square(1, xy = (it.multi_index[1], it.multi_index[0]), fill = color))
+    it.iternext()
+obstructions = gizeh.Group(obstructions)
 
 i = 0
 
@@ -39,20 +53,22 @@ def make_frame(t):
     else:
         ff.kill()
     i += 1
-    image = surface.get_npimage()
-    surface = gizeh.Surface(H, W, bg_color = (255, 255, 255))
-    ff.armyGrid(army_grid)
-    it = numpy.nditer(army_grid, op_flags = ['readwrite'], flags = ['multi_index'])
+    field = gizeh.Surface(H, W, bg_color = (1, 1, 1))
+    obstructions.draw(field)
+    ff.armyGrid(army)
+    soldiers = []
+    it = numpy.nditer(army, op_flags = ['readwrite'], flags = ['multi_index'])
     while not it.finished:
-        #import pdb;pdb.set_trace()
         if it[0] == 0:
             it[0] = -1
-            image[it.multi_index[0]][it.multi_index[1]] = (255, 0, 0)
+            soldiers.append(gizeh.square(1, xy = (it.multi_index[1], it.multi_index[0]), fill = (1, 0, 0)))
         elif it[0] == 1:
             it[0] = -1
-            image[it.multi_index[0]][it.multi_index[1]] = (0, 0, 255)
+            soldiers.append(gizeh.square(1, xy = (it.multi_index[1], it.multi_index[0]), fill = (0, 0, 1)))
         it.iternext()
-    return image
+    gizeh.Group(soldiers).draw(field)
+    return field.get_npimage()
 
-clip = mpy.VideoClip(make_frame, duration=600)
-clip.write_gif("circle.gif", fps=2, opt="OptimizePlus", fuzz=10)
+clip = mpy.VideoClip(make_frame, duration=100)
+clip.write_videofile("battle.mp4", fps=5)
+#clip.write_gif("circle.gif", fps=5, opt="OptimizePlus", fuzz=10)
