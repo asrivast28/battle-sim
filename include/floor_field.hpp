@@ -89,7 +89,8 @@ public:
     FloorField(std::size_t nrows, std::size_t ncols)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
-          m_claimed(nrows, ncols), m_probability(nrows, ncols)
+          m_claimed(nrows, ncols), m_probability(nrows, ncols), 
+          m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
         m_target_x[0] = 0;
@@ -110,7 +111,7 @@ public:
     FloorField(std::size_t nrows, std::size_t ncols, unsigned char* accessibility)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
-          m_claimed(nrows, ncols), m_probability(nrows, ncols)
+          m_claimed(nrows, ncols), m_probability(nrows, ncols), m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
         m_target_x[0] = 0;
@@ -181,6 +182,15 @@ public:
             }
         }
     }
+    
+    void initializeLastmove() {
+        for (std::size_t x = 0; x < m_nrows; ++x) {
+            for (std::size_t y = 0; y < m_ncols; ++y) {
+		    m_lastmove(x,y)=0;
+            }
+        }
+    }
+
 
     void
     move() {
@@ -188,6 +198,8 @@ public:
         float mat_g[3 * 3] = {};
         // local matrix of preference
         float mat_l[3 * 3] = {};
+	//last move matrix
+	float mat_m[3 * 3] = {};
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
 
@@ -198,7 +210,8 @@ public:
                 if (!m_soldiers(x, y).empty()) {
                     calculateGlobalPreference(x, y, mat_g);
                     calculateLocalPreference(x, y, mat_l);
-                    calculateTransitionalProbabilities(x, y, mat_g, mat_l, trans_prob);
+		    calculateMovementMatrix(x,y,mat_m);
+                    calculateTransitionalProbabilities(x, y, mat_g, mat_l, mat_m, trans_prob);
                     claimCell(x, y, trans_prob);
                 }
             }
@@ -263,6 +276,9 @@ public:
                     const Soldier& s = m_soldiers(x + i - 1, y + j - 1);
                     m_soldiers(x, y) = s;
                     m_soldiers(x + i - 1, y + j - 1).clear();
+		    // update the move direction: 3*(t/3) + t%3 - (3*(t/3) + t%3)/5, translates to be 'a'
+		    m_lastmove(x,y) = a;
+		    
                     // increase neighbor count in the new neighborhood
                     updateNeighborCounts(x, y, s.army(), true);
                     // decrease neighbor count in the old neighborhood
@@ -436,11 +452,25 @@ private:
             }
         }
     }
+    
+    void calculateMovementMatrix(const std::size_t x, const std::size_t y, float* const mat_m) const
+    {
+	    unsigned char a = m_lastmove(x,y);
+	    unsigned char t = a + a/4;
+	    unsigned char i = t/3;
+	    unsigned char j = t%3;
+	    for (unsigned char p=0; p<3; p++) {
+		    for (unsigned char q=0; q<3; q++) {
+			    mat_m[p*3+q] = 0;
+		    }
+	    }
+	    mat_m[i*3+j]=1;
+    }
 
     /// calculate transitional probabilities for a soldier, based on a soldier attributes, local and global preference matrix
     void
     calculateTransitionalProbabilities(const std::size_t x, const std::size_t y,
-                                       float* const mat_g, float* const mat_l,
+                                       float* const mat_g, float* const mat_l, float* const mat_m,
                                        float* const trans_prob) const
     {
         const Soldier& soldier = m_soldiers(x, y);
@@ -449,6 +479,7 @@ private:
         // happiness of the soldier is defined as the relative count of soldiers of the same army
         float h = m_neighbors[soldier.army()](x, y);
         h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
+	float p=0.75;
 
         float sum_prob = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
@@ -460,7 +491,7 @@ private:
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
 // 				TODO refine the following expression to give preference to the current dir
-                            float mat_ij = a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]);
+                            float mat_ij = p * mat_m[i * 3 + j] + (1 - p) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
                             // calculate transitional probability
                             // TODO: refine the following expression?
                             assert (mat_ij >= 0);
@@ -469,6 +500,7 @@ private:
                             // reset global and local matrix of preference
                             mat_g[i * 3 + j] = 0.0;
                             mat_l[i * 3 + j] = 0.0;
+			    mat_m[i * 3 + j] = 0.0;
                         }
                     }
                     sum_prob += trans_prob[i * 3 + j];
@@ -523,6 +555,9 @@ private:
     // target coordinates
     std::size_t m_target_x[2];
     std::size_t m_target_y[2];
+    
+    // preference given to the last move of the soldier
+    // float p;
 
     // grid for movement of the soldiers
     matrix<Soldier> m_soldiers;
@@ -537,6 +572,8 @@ private:
     matrix<unsigned char> m_claimed;
     // matrix for storing probabilities (kill and movement)
     matrix<float> m_probability;
+    // matrix to store the last move
+    matrix<unsigned char> m_lastmove;
 
 }; // class FloorField
 

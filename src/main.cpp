@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     // MUST be called before the start of iterations
     ff.initializeNeighborhood();
 
-    int n_iter = 20;
+    int n_iter = 10;
     double sleep_secs = 0.5;
     std::cout << ff.mat() << std::endl;
     usleep((unsigned int) (sleep_secs * 1000000));
