@@ -61,7 +61,7 @@ def make_frame(t):
     while not it.finished:
         if it[0] == 0:
             it[0] = -1
-            soldiers.append(gizeh.square(1, xy = (it.multi_index[1], it.multi_index[0]), fill = (1, 0, 0)))
+            soldiers.append(gizeh.square(1, xy = (it.multi_index[1], it.multi_index[0]), fill = (0, 1, 0)))
         elif it[0] == 1:
             it[0] = -1
             soldiers.append(gizeh.square(1, xy = (it.multi_index[1], it.multi_index[0]), fill = (0, 0, 1)))
