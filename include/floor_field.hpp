@@ -208,7 +208,8 @@ public:
             for (std::size_t y = 0; y < m_ncols; ++y) {
                 // do the calculations only if there is a soldier in the current cell
                 if (!m_soldiers(x, y).empty()) {
-                    calculateGlobalPreference(x, y, mat_g);
+			// if the fourth param is true, goal is to destroy enemy. If nothing provided, false by default
+                    calculateGlobalPreference(x, y, mat_g, true);
                     calculateLocalPreference(x, y, mat_l);
 		    calculateMovementMatrix(x,y,mat_m);
                     calculateTransitionalProbabilities(x, y, mat_g, mat_l, mat_m, trans_prob);
@@ -392,8 +393,17 @@ private:
 
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
-    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g) const
+    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g, bool DestroyEnemy = false) const
     {
+	// if we want to destroy the enemy, calculate in a different way
+	if (DestroyEnemy) {
+		// if there is no enemy nearby, false will be returned and the matrix will be calculated the usual way. Otherwise it will return here.
+		bool ShouldBeUsed = calculateNearEnemyDirection(x,y,mat_g);
+		if (ShouldBeUsed) {
+			return;
+		}
+	}
+	
         unsigned char army = m_soldiers(x, y).army();
 
         // give higher global preference to the cell which takes the soldier closer to the target
@@ -421,6 +431,41 @@ private:
                 mat_g[i] /= sum_distance;
             }
         }
+    }
+    
+    // support function for calculating global matrix of preference, in case we want to destroy opponent's army
+    bool
+    calculateNearEnemyDirection(const std::size_t x, const std::size_t y, float* const mat_g) const
+    {
+	    // enemy army
+	unsigned char e_army = m_soldiers(x,y).enemy();
+        float sum_neighbors = 0.0;
+        // first store the neighbor counts in the k-neighborhood
+        for (unsigned char i = 0; i < 3; ++i) {
+            // check the row bounds
+            if ((x + i * m_k >= m_k) && (x +  i * m_k - m_k < m_nrows)) {
+                for (unsigned char j = 0; j < 3; ++j) {
+                    // check the column bounds
+                    if ((y + j * m_k >= m_k) && (y + j * m_k - m_k < m_ncols)) {
+                        mat_g[i * 3 + j] = m_neighbors[e_army](x + i * m_k - m_k, y + j * m_k - m_k);
+                    }
+                    sum_neighbors += mat_g[i * 3 + j];
+                }
+            }
+        }
+
+        // if there are no enemy neighbors nearby, should not be used
+        if (sum_neighbors==0) {
+		return false;
+	}
+        if (std::fabs(sum_neighbors - 0.0) > FLOAT_EPSILON) {
+            // now normalize based on the total sum of counts
+            // TODO: ensure that all the values in the matrix are non-zero
+            for (unsigned char i = 0; i < 3 * 3; ++i) {
+                mat_g[i] /= sum_neighbors;
+            }
+        }
+        return true;
     }
 
     /// computes local preference matrix for a soldier, based on extended neighborhood
@@ -479,7 +524,7 @@ private:
         // happiness of the soldier is defined as the relative count of soldiers of the same army
         float h = m_neighbors[soldier.army()](x, y);
         h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
-	float p=0.75;
+	float p=0.25;
 
         float sum_prob = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
