@@ -45,11 +45,15 @@ class PixelFill(object):
         self.size = 1
         self.mapping = {0 : {}, 1 : {}}
 
+        self.mapping[0][Soldier.LEADER] = (0, 1, 0)
+        self.mapping[1][Soldier.LEADER] = (0, 0, 1)
+
         self.mapping[0][Soldier.SWORDSMAN] = (0, 1, 0)
         self.mapping[1][Soldier.SWORDSMAN] = (0, 0, 1)
 
         self.mapping[0][Soldier.ARCHER] = (0, 1, 0)
         self.mapping[1][Soldier.ARCHER] = (0, 0, 1)
+
 
 class IconFill(PixelFill):
     """
@@ -59,6 +63,9 @@ class IconFill(PixelFill):
         self.scale = 10
         self.size = 20
         self.mapping = {0: {}, 1: {}}
+
+        self.mapping[0][Soldier.LEADER] = self.getImage('leader_0.png').scale(10)
+        self.mapping[1][Soldier.LEADER] = self.getImage('leader_1.png').scale(10)
 
         self.mapping[0][Soldier.SWORDSMAN] = self.getImage('swordsman_0.png').scale(10)
         self.mapping[1][Soldier.SWORDSMAN] = self.getImage('swordsman_1.png').scale(10)
