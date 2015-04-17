@@ -11,10 +11,9 @@ import moviepy.editor as mpy
 
 seed(0)
 
-H, W = 80, 80
+H, W = 40, 80
 
 accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
-killed = numpy.full((H, W), False, dtype = numpy.bool)
 #for x in xrange(90, 110):
     #for y in xrange(90, 110):
         #accessibility[x][y] = 0
@@ -106,7 +105,7 @@ class FrameBuilder(object):
                 obstructions.append(gizeh.square(self.fill.size, xy = (it.multi_index[1], it.multi_index[0]), fill = color))
             it.iternext()
         obstructions = gizeh.Group(obstructions)
-        field = gizeh.Surface(H * self.fill.scale, W * self.fill.scale, bg_color = (1, 1, 1))
+        field = gizeh.Surface(W * self.fill.scale, H * self.fill.scale, bg_color = (1, 1, 1))
         obstructions.draw(field)
         return field.get_npimage()
 
@@ -152,7 +151,7 @@ class FrameBuilder(object):
         return self.frame.get_npimage()
 
 
-#clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 80)
-clip = mpy.VideoClip(FrameBuilder(PixelFill()), duration=50)
+clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 80)
+#clip = mpy.VideoClip(FrameBuilder(PixelFill()), duration=50)
 #clip.write_videofile("battle.mp4", fps=2)
 clip.write_gif("circle.gif", fps=2, opt="OptimizePlus", fuzz=10)
