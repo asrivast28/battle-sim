@@ -136,9 +136,9 @@ private:
     createDynamicFieldMap()
     {
         std::map<Type, unsigned char> dynamicFieldMap;
-        dynamicFieldMap[LEADER] = 10;
-        dynamicFieldMap[SWORDSMAN] = 1;
-        dynamicFieldMap[ARCHER] = 1;
+        dynamicFieldMap[LEADER] = 50;
+        dynamicFieldMap[SWORDSMAN] = 10;
+        dynamicFieldMap[ARCHER] = 10;
         return dynamicFieldMap;
     }
 
