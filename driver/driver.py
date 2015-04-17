@@ -64,14 +64,9 @@ class IconFill(PixelFill):
         self.size = 20
         self.mapping = {0: {}, 1: {}}
 
-        self.mapping[0][Soldier.LEADER] = self.getImage('leader_0.png').scale(10)
-        self.mapping[1][Soldier.LEADER] = self.getImage('leader_1.png').scale(10)
-
-        self.mapping[0][Soldier.SWORDSMAN] = self.getImage('swordsman_0.png').scale(10)
-        self.mapping[1][Soldier.SWORDSMAN] = self.getImage('swordsman_1.png').scale(10)
-
-        self.mapping[0][Soldier.ARCHER] = self.getImage('archer_0.png').scale(10)
-        self.mapping[1][Soldier.ARCHER] = self.getImage('archer_1.png').scale(10)
+        for t in ('LEADER', 'SWORDSMAN', 'ARCHER'):
+            for a in (0, 1):
+                self.mapping[a][getattr(Soldier, t)] = self.getImage('%s_%d.png'%(t.lower(), a)).scale(10)
 
     def getImage(self, name):
         import itertools, png
