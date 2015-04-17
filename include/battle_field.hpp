@@ -6,8 +6,8 @@
  * Copyright (c) TODO
  */
 
-#ifndef FLOOR_FIELD_H
-#define FLOOR_FIELD_H
+#ifndef BATTLE_FIELD_H
+#define BATTLE_FIELD_H
 
 #include "matrix.hpp"
 #include "soldier.hpp"
@@ -78,7 +78,7 @@ pickIndex(float* const prob_dist, const std::size_t max_index)
 }
 
 
-class FloorField {
+class BattleField {
 private:
   // extended neighborhood size
   static const unsigned char m_k = 5;
@@ -86,7 +86,7 @@ private:
   static const unsigned char m_beta = 1;
 
 public:
-    FloorField(std::size_t nrows, std::size_t ncols)
+    BattleField(std::size_t nrows, std::size_t ncols)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
           m_claimed(nrows, ncols), m_probability(nrows, ncols),
@@ -108,7 +108,7 @@ public:
         m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
     }
 
-    FloorField(std::size_t nrows, std::size_t ncols, unsigned char* accessibility)
+    BattleField(std::size_t nrows, std::size_t ncols, unsigned char* accessibility)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
           m_claimed(nrows, ncols), m_probability(nrows, ncols), m_lastmove(nrows, ncols)
@@ -381,7 +381,7 @@ public:
     }
 
     /// Destructor
-    ~FloorField()
+    ~BattleField()
     { }
 
 private:
@@ -630,6 +630,6 @@ private:
     // matrix to store the last move
     matrix<unsigned char> m_lastmove;
 
-}; // class FloorField
+}; // class BattleField
 
-#endif // FLOOR_FIELD_H
+#endif // BATTLE_FIELD_H

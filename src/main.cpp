@@ -2,11 +2,11 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "floor_field.hpp"
+#include "battle_field.hpp"
 
 int main(int argc, char *argv[])
 {
-    FloorField ff(20,20);
+    BattleField ff(20,20);
 
     srand(0);
 

@@ -1,5 +1,5 @@
 import battlesim
-from battlesim import Soldier, FloorField
+from battlesim import Soldier, BattleField
 
 import numpy
 from random import randint, seed
@@ -22,8 +22,8 @@ killed = numpy.full((H, W), False, dtype = numpy.bool)
 
 #ff.printGrid()
 
-ff = FloorField(accessibility)
-#ff = FloorField(H, W)
+ff = BattleField(accessibility)
+#ff = BattleField(H, W)
 
 for y in xrange(0, W):
     ff.setSoldier(0, y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))

@@ -2,7 +2,7 @@
 %{
 #define SWIG_FILE_WITH_INIT
 #include "soldier.hpp"
-#include "floor_field.hpp"
+#include "battle_field.hpp"
 %}
 
 %include "numpy.i"
@@ -35,11 +35,11 @@ public:
 };
 
 
-%nodefaultctor FloorField;
-class FloorField {
+%nodefaultctor BattleField;
+class BattleField {
 public:
-  FloorField(std::size_t, std::size_t);
-  FloorField(std::size_t, std::size_t, unsigned char*);
+  BattleField(std::size_t, std::size_t);
+  BattleField(std::size_t, std::size_t, unsigned char*);
   void setSoldier(std::size_t, std::size_t, const Soldier&);
   void setTarget(const unsigned char, const std::size_t, const std::size_t);
   void initializeNeighborhood();
@@ -48,6 +48,6 @@ public:
   void kill(std::size_t, std::size_t, bool*);
   void kill();
   void printGrid();
-  ~FloorField();
+  ~BattleField();
 };
 %clear (std::size_t, std::size_t, unsigned char*);
