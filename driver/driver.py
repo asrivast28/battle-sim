@@ -11,9 +11,10 @@ import moviepy.editor as mpy
 
 seed(0)
 
-H, W = 40, 40
+H, W = 80, 80
 
 accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
+killed = numpy.full((H, W), False, dtype = numpy.bool)
 #for x in xrange(90, 110):
     #for y in xrange(90, 110):
         #accessibility[x][y] = 0
@@ -54,6 +55,8 @@ class PixelFill(object):
         self.mapping[0][Soldier.ARCHER] = (0, 1, 0)
         self.mapping[1][Soldier.ARCHER] = (0, 0, 1)
 
+        self.dead = (1, 0, 0)
+
 
 class IconFill(PixelFill):
     """
@@ -67,6 +70,8 @@ class IconFill(PixelFill):
         for t in ('LEADER', 'SWORDSMAN', 'ARCHER'):
             for a in (0, 1):
                 self.mapping[a][getattr(Soldier, t)] = self.getImage('%s_%d.png'%(t.lower(), a)).scale(10)
+
+        self.dead = self.getImage('dead.png').scale(10)
 
     def getImage(self, name):
         import itertools, png
@@ -86,6 +91,7 @@ class FrameBuilder(object):
         self.fill = fill
         self.field = self.createField(accessibility)
         self.soldiers = numpy.full((H, W), -1, dtype = numpy.uint8)
+        self.killed = numpy.full((H, W), False, dtype = numpy.bool)
         self.i = 0
 
     def createField(self, accessibility):
@@ -104,24 +110,12 @@ class FrameBuilder(object):
         obstructions.draw(field)
         return field.get_npimage()
 
-    def advance(self):
-        """
-        Advance to the next time step.
-        This does move and kill alternatively.
-        """
-        if self.i == 0:
-            pass
-        elif self.i % 2 == 0:
-            ff.move()
-        else:
-            ff.kill()
-        self.i += 1
-
-    def __call__(self, t):
-        self.advance()
-        # create a new surface for each frame
-        field = gizeh.Surface.from_image(self.field)
-        ff.getSoldiers(self.soldiers)
+    def move(self):
+        # create new frame
+        self.frame = gizeh.Surface.from_image(self.field)
+        # move soldiers and obtain their new positions
+        ff.move(self.soldiers)
+        # draw soldiers, in new position, on the field
         soldiers = []
         it = numpy.nditer(self.soldiers, op_flags = ['readwrite'], flags = ['multi_index'])
         while not it.finished:
@@ -131,11 +125,34 @@ class FrameBuilder(object):
                 soldiers.append(gizeh.square(self.fill.size, xy = xy, fill = fill))
                 it[0] = -1
             it.iternext()
-        gizeh.Group(soldiers).draw(field)
-        return field.get_npimage()
+        gizeh.Group(soldiers).draw(self.frame)
+
+    def kill(self):
+        # kill soldiers and find out which soldiers are killed
+        ff.kill(self.killed)
+        # draw killed soldiers
+        killed = []
+        it = numpy.nditer(self.killed, op_flags = ['readwrite'], flags = ['multi_index'])
+        while not it.finished:
+            if it[0]:
+                xy = [it.multi_index[a] * self.fill.scale for a in (1, 0)]
+                fill = self.fill.dead
+                killed.append(gizeh.square(self.fill.size, xy = xy, fill = fill))
+                it[0] = False
+            it.iternext()
+        gizeh.Group(killed).draw(self.frame)
+
+    def __call__(self, t):
+        if self.i % 2 == 0:
+            self.move()
+        else:
+            self.kill()
+        self.i += 1
+        # create a new surface for each frame
+        return self.frame.get_npimage()
 
 
-clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 50)
-#clip = mpy.VideoClip(FrameBuilder(IconFill()), duration=50)
+#clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 80)
+clip = mpy.VideoClip(FrameBuilder(PixelFill()), duration=50)
 #clip.write_videofile("battle.mp4", fps=2)
-clip.write_gif("circle.gif", fps=5, opt="OptimizePlus", fuzz=10)
+clip.write_gif("circle.gif", fps=2, opt="OptimizePlus", fuzz=10)

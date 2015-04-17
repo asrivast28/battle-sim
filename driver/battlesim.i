@@ -13,6 +13,9 @@ import_array();
 %numpy_typemaps(unsigned char, NPY_UBYTE, std::size_t)
 %apply (std::size_t DIM1, std::size_t DIM2, unsigned char* INPLACE_ARRAY2) {(std::size_t, std::size_t, unsigned char*)}
 
+%numpy_typemaps(bool, NPY_BOOL, std::size_t)
+%apply (std::size_t DIM1, std::size_t DIM2, bool* INPLACE_ARRAY2) {(std::size_t, std::size_t, bool*)}
+
 class Soldier {
 public:
     enum Type {
@@ -37,12 +40,13 @@ class FloorField {
 public:
   FloorField(std::size_t, std::size_t);
   FloorField(std::size_t, std::size_t, unsigned char*);
-  void move();
-  void kill();
   void setSoldier(std::size_t, std::size_t, const Soldier&);
   void setTarget(const unsigned char, const std::size_t, const std::size_t);
   void initializeNeighborhood();
-  void getSoldiers(std::size_t, std::size_t, unsigned char*);
+  void move(std::size_t, std::size_t, unsigned char*);
+  void move();
+  void kill(std::size_t, std::size_t, bool*);
+  void kill();
   void printGrid();
   ~FloorField();
 };

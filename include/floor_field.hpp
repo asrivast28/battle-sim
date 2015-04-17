@@ -152,17 +152,6 @@ public:
     }
 
     void
-    getSoldiers(std::size_t dim1, std::size_t dim2, unsigned char* grid) const {
-        for (std::size_t x = 0; x < dim1; ++x) {
-            for (std::size_t y = 0; y < dim2; ++y) {
-                if (!m_soldiers(x, y).empty()) {
-                    grid[x * m_ncols + y] = m_soldiers(x, y).army();
-                }
-            }
-        }
-    }
-
-    void
     setTarget(const unsigned char army, const std::size_t target_x, const std::size_t target_y)
     {
         m_target_x[army] = target_x;
@@ -183,7 +172,8 @@ public:
         }
     }
 
-    void initializeLastmove() {
+    void
+    initializeLastmove() {
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
                 m_lastmove(x,y)=0;
@@ -292,7 +282,6 @@ public:
 
                     // now unset all the claimed bits for this cells
                     m_claimed(x, y) = 0;
-                    // TODO: update the extended neighborhood counts here once it is just calculated just once
                 }
                 // set probability to 0.0 for all the cells
                 m_probability(x, y) = 0.0;
@@ -301,7 +290,21 @@ public:
     }
 
     void
-    kill()
+    move(std::size_t dim1, std::size_t dim2, unsigned char* soldiers)
+    {
+        move();
+
+        for (std::size_t x = 0; x < dim1; ++x) {
+            for (std::size_t y = 0; y < dim2; ++y) {
+                if (!m_soldiers(x, y).empty()) {
+                    soldiers[x * m_ncols + y] = m_soldiers(x, y).army();
+                }
+            }
+        }
+    }
+
+    void
+    kill(std::size_t dim1, std::size_t dim2, bool* killed)
     {
         // choose-a-kill loop
         for (std::size_t x = 0; x < m_nrows; ++x) {
@@ -362,10 +365,19 @@ public:
                         //DEBUG_MSG("killing (%zd, %zd)\n", x, y);
                         updateNeighborCounts(x, y, m_soldiers(x, y).army(), false);
                         m_soldiers(x, y).kill();
+                        if (killed != NULL) {
+                            killed[x * m_ncols + y] = true;
+                        }
                     }
                 }
             }
         }
+    }
+
+    void
+    kill()
+    {
+        kill(m_nrows, m_ncols, NULL);
     }
 
     /// Destructor
@@ -522,7 +534,7 @@ private:
         // happiness of the soldier is defined as the relative count of soldiers of the same army
         float h = m_neighbors[soldier.army()](x, y);
         h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
-	float p=0.25;
+        float p=0.25;
 
         float sum_prob = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
@@ -533,7 +545,7 @@ private:
                     if ((y + j >= 1) && (y + j - 1 < m_ncols)) {
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
-// 				TODO refine the following expression to give preference to the current dir
+                            // TODO: refine the following expression to give preference to the current dir
                             float mat_ij = p * mat_m[i * 3 + j] + (1 - p) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
                             // calculate transitional probability
                             // TODO: refine the following expression?
@@ -543,7 +555,7 @@ private:
                             // reset global and local matrix of preference
                             mat_g[i * 3 + j] = 0.0;
                             mat_l[i * 3 + j] = 0.0;
-			    mat_m[i * 3 + j] = 0.0;
+                            mat_m[i * 3 + j] = 0.0;
                         }
                     }
                     sum_prob += trans_prob[i * 3 + j];
