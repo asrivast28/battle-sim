@@ -3,7 +3,6 @@ from battlesim import Soldier, BattleField
 
 import numpy
 from random import randint, seed
-from time import sleep
 
 import gizeh
 import moviepy.editor as mpy
@@ -94,8 +93,9 @@ class FrameBuilder(object):
     def __init__(self, fill):
         self.fill = fill
         self.field = self.createField(accessibility)
-        self.soldiers = numpy.full((H, W), -1, dtype = numpy.uint8)
-        self.killed = numpy.full((H, W), False, dtype = numpy.bool)
+        count = bf.getSoldierCount(0) + bf.getSoldierCount(1)
+        self.soldiers = battlesim.SoldierPositionVector(count)
+        self.killed = battlesim.KilledPositionVector()
         self.i = 0
 
     def createField(self, accessibility):
@@ -119,31 +119,28 @@ class FrameBuilder(object):
         self.frame = gizeh.Surface.from_image(self.field)
         # move soldiers and obtain their new positions
         bf.move(self.soldiers)
+        count = bf.getSoldierCount(0) + bf.getSoldierCount(1)
         # draw soldiers, in new position, on the field
         soldiers = []
-        it = numpy.nditer(self.soldiers, op_flags = ['readwrite'], flags = ['multi_index'])
-        while not it.finished:
-            if it[0] != 255:
-                xy = [it.multi_index[a] * self.fill.scale for a in (1, 0)]
-                fill = self.fill.mapping[int(it[0])][Soldier.SWORDSMAN]
-                soldiers.append(gizeh.square(self.fill.size, xy = xy, fill = fill))
-                it[0] = -1
-            it.iternext()
+        it = iter(self.soldiers)
+        for i in xrange(count):
+            pos, army = it.next()
+            xy = [i * self.fill.scale for i in (pos % W, pos / W)]
+            fill = self.fill.mapping[army][Soldier.SWORDSMAN]
+            soldiers.append(gizeh.square(self.fill.size, xy = xy, fill = fill))
         gizeh.Group(soldiers).draw(self.frame)
 
     def kill(self):
         # kill soldiers and find out which soldiers are killed
-        bf.kill(self.killed)
+        count = bf.kill(self.killed)
         # draw killed soldiers
         killed = []
-        it = numpy.nditer(self.killed, op_flags = ['readwrite'], flags = ['multi_index'])
-        while not it.finished:
-            if it[0]:
-                xy = [it.multi_index[a] * self.fill.scale for a in (1, 0)]
-                fill = self.fill.dead
-                killed.append(gizeh.square(self.fill.size, xy = xy, fill = fill))
-                it[0] = False
-            it.iternext()
+        it = iter(self.killed)
+        for i in xrange(count):
+            pos = it.next()
+            xy = [i * self.fill.scale for i in (pos % W, pos / W)]
+            fill = self.fill.dead
+            killed.append(gizeh.square(self.fill.size, xy = xy, fill = fill))
         gizeh.Group(killed).draw(self.frame)
 
     def __call__(self, t):

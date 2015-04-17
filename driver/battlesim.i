@@ -37,7 +37,10 @@ public:
   Soldier(const Soldier&);
 };
 
+%template() std::pair<size_t, unsigned char>;
 %template() std::pair<size_t, Soldier>;
+%template(KilledPositionVector) std::vector<size_t>;
+%template(SoldierPositionVector) std::vector<std::pair<size_t, unsigned char> >;
 %template() std::vector<std::pair<size_t, Soldier> >;
 
 %nodefaultctor BattleField;
@@ -47,12 +50,11 @@ public:
   BattleField(size_t, size_t, unsigned char*);
   void setSoldiers(const std::vector<std::pair<size_t, Soldier> >&);
   void setTarget(const unsigned char, const size_t, const size_t);
-  void move(size_t, size_t, unsigned char*);
-  void move();
-  void kill(size_t, size_t, bool*);
-  void kill();
+  void move(std::vector<std::pair<size_t, unsigned char> >&);
+  size_t kill(std::vector<size_t>&, bool = true);
+  size_t kill();
+  size_t getSoldierCount(const unsigned char);
   void printGrid();
   ~BattleField();
 };
 %clear (size_t, size_t, unsigned char*);
-

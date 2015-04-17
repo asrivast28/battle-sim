@@ -294,21 +294,24 @@ public:
     }
 
     void
-    move(size_t dim1, size_t dim2, unsigned char* soldiers)
+    move(std::vector<std::pair<size_t, unsigned char> >& positions)
     {
+        // first call actual move
         move();
 
-        for (size_t x = 0; x < dim1; ++x) {
-            for (size_t y = 0; y < dim2; ++y) {
+        // now record positions
+        size_t count = 0;
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
-                    soldiers[x * m_ncols + y] = m_soldiers(x, y).army();
+                    positions[count++] = std::make_pair(x * m_ncols + y, m_soldiers(x, y).army());
                 }
             }
         }
     }
 
-    void
-    kill(size_t dim1, size_t dim2, bool* killed)
+    size_t 
+    kill(std::vector<size_t>& positions, bool record = true)
     {
         // choose-a-kill loop
         for (size_t x = 0; x < m_nrows; ++x) {
@@ -355,6 +358,7 @@ public:
         }
 
         // actual kill loop
+        size_t count = 0;
         for (size_t x = 0; x < m_nrows; ++x) {
             for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty() && (m_probability(x, y) > 0.0)) {
@@ -367,22 +371,37 @@ public:
                         // TODO: collect statistics for the soldier before killing
                         // kill the soldier
                         //DEBUG_MSG("killing (%zd, %zd)\n", x, y);
+                        unsigned char army = m_soldiers(x, y).army();
                         m_soldiers(x, y).kill();
-                        updateNeighborCounts(x, y, m_soldiers(x, y).army(), false);
-                        if (killed != NULL) {
-                            killed[x * m_ncols + y] = true;
+                        updateNeighborCounts(x, y, army, false);
+                        if (record) {
+                            if (count < positions.size()) {
+                                positions[count++] = x * m_ncols + y;
+                            }
+                            else {
+                                positions.push_back(x * m_ncols + y);
+                                ++count;
+                            }
                         }
-                        --m_total_soldiers[m_soldiers(x, y).army()];
+                        --m_total_soldiers[army];
                     }
                 }
             }
         }
+        return count;
     }
 
-    void
+    size_t 
     kill()
     {
-        kill(m_nrows, m_ncols, NULL);
+        std::vector<size_t> dummy;
+        return kill(dummy, false);
+    }
+
+    size_t
+    getSoldierCount(const unsigned char army)
+    {
+        return m_total_soldiers[army];
     }
 
     /// Destructor
