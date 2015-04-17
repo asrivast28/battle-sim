@@ -89,7 +89,7 @@ public:
     FloorField(std::size_t nrows, std::size_t ncols)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
-          m_claimed(nrows, ncols), m_probability(nrows, ncols), 
+          m_claimed(nrows, ncols), m_probability(nrows, ncols),
           m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
@@ -182,7 +182,7 @@ public:
             }
         }
     }
-    
+
     void initializeLastmove() {
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
@@ -279,7 +279,7 @@ public:
                     m_soldiers(x + i - 1, y + j - 1).clear();
                     // update the move direction: 3*(t/3) + t%3 - (3*(t/3) + t%3)/5, translates to be 'a'
                     m_lastmove(x,y) = a;
-		    
+		
                     // increase neighbor count in the new neighborhood
                     updateNeighborCounts(x, y, s.army(), true);
                     // decrease neighbor count in the old neighborhood
@@ -410,9 +410,9 @@ private:
         float sum_distance = 0.0;
         float max_distance = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
-              std::size_t diff_x = m_target_x[army] > (x + i) ? (m_target_x[army] - (x + i - 1)) : ((x + i - 1) - m_target_x[army]);  
+              std::size_t diff_x = m_target_x[army] > (x + i) ? (m_target_x[army] - (x + i - 1)) : ((x + i - 1) - m_target_x[army]);
               for (unsigned char j = 0; j < 3; ++j) {
-                  std::size_t diff_y = m_target_y[army] > (y + j) ? (m_target_y[army] - (y + j - 1)) : ((y + j - 1) - m_target_y[army]);  
+                  std::size_t diff_y = m_target_y[army] > (y + j) ? (m_target_y[army] - (y + j - 1)) : ((y + j - 1) - m_target_y[army]);
                   float distance = sqrt(pow(diff_x, 2.0) + pow(diff_y, 2.0));
                   mat_g[i * 3 + j] = distance;
                   sum_distance += distance;
@@ -431,7 +431,7 @@ private:
             }
         }
     }
-    
+
     // support function for calculating global matrix of preference, in case we want to destroy opponent's army
     bool
     calculateNearEnemyDirection(const std::size_t x, const std::size_t y, float* const mat_g) const
@@ -495,7 +495,7 @@ private:
             }
         }
     }
-    
+
     void calculateMovementMatrix(const std::size_t x, const std::size_t y, float* const mat_m) const
     {
         unsigned char a = m_lastmove(x,y);
@@ -598,7 +598,7 @@ private:
     // target coordinates
     std::size_t m_target_x[2];
     std::size_t m_target_y[2];
-    
+
     // preference given to the last move of the soldier
     // float p;
 

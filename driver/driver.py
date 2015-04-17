@@ -11,7 +11,7 @@ import moviepy.editor as mpy
 
 seed(0)
 
-H, W = 20, 20 
+H, W = 40, 40
 
 accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
 #for x in xrange(90, 110):
@@ -83,7 +83,7 @@ class FrameBuilder(object):
     Class that builds the actual frames in the video.
     """
     def __init__(self, fill):
-        self.fill = fill 
+        self.fill = fill
         self.field = self.createField(accessibility)
         self.soldiers = numpy.full((H, W), -1, dtype = numpy.uint8)
         self.i = 0
@@ -120,7 +120,7 @@ class FrameBuilder(object):
     def __call__(self, t):
         self.advance()
         # create a new surface for each frame
-        field = gizeh.Surface.from_image(self.field) 
+        field = gizeh.Surface.from_image(self.field)
         ff.getSoldiers(self.soldiers)
         soldiers = []
         it = numpy.nditer(self.soldiers, op_flags = ['readwrite'], flags = ['multi_index'])
