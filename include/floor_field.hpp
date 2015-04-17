@@ -186,7 +186,7 @@ public:
     void initializeLastmove() {
         for (std::size_t x = 0; x < m_nrows; ++x) {
             for (std::size_t y = 0; y < m_ncols; ++y) {
-		    m_lastmove(x,y)=0;
+                m_lastmove(x,y)=0;
             }
         }
     }
@@ -198,8 +198,8 @@ public:
         float mat_g[3 * 3] = {};
         // local matrix of preference
         float mat_l[3 * 3] = {};
-	//last move matrix
-	float mat_m[3 * 3] = {};
+        //last move matrix
+        float mat_m[3 * 3] = {};
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
 
@@ -208,10 +208,10 @@ public:
             for (std::size_t y = 0; y < m_ncols; ++y) {
                 // do the calculations only if there is a soldier in the current cell
                 if (!m_soldiers(x, y).empty()) {
-			// if the fourth param is true, goal is to destroy enemy. If nothing provided, false by default
+                    // if the fourth param is true, goal is to destroy enemy. If nothing provided, false by default
                     calculateGlobalPreference(x, y, mat_g, true);
                     calculateLocalPreference(x, y, mat_l);
-		    calculateMovementMatrix(x,y,mat_m);
+                    calculateMovementMatrix(x,y,mat_m);
                     calculateTransitionalProbabilities(x, y, mat_g, mat_l, mat_m, trans_prob);
                     claimCell(x, y, trans_prob);
                 }
@@ -277,8 +277,8 @@ public:
                     const Soldier& s = m_soldiers(x + i - 1, y + j - 1);
                     m_soldiers(x, y) = s;
                     m_soldiers(x + i - 1, y + j - 1).clear();
-		    // update the move direction: 3*(t/3) + t%3 - (3*(t/3) + t%3)/5, translates to be 'a'
-		    m_lastmove(x,y) = a;
+                    // update the move direction: 3*(t/3) + t%3 - (3*(t/3) + t%3)/5, translates to be 'a'
+                    m_lastmove(x,y) = a;
 		    
                     // increase neighbor count in the new neighborhood
                     updateNeighborCounts(x, y, s.army(), true);
@@ -393,16 +393,16 @@ private:
 
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
-    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g, bool DestroyEnemy = false) const
+    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g, bool destroy_enemy = false) const
     {
-	// if we want to destroy the enemy, calculate in a different way
-	if (DestroyEnemy) {
-		// if there is no enemy nearby, false will be returned and the matrix will be calculated the usual way. Otherwise it will return here.
-		bool ShouldBeUsed = calculateNearEnemyDirection(x,y,mat_g);
-		if (ShouldBeUsed) {
-			return;
-		}
-	}
+        // if we want to destroy the enemy, calculate in a different way
+        if (destroy_enemy) {
+            // if there is no enemy nearby, false will be returned and the matrix will be calculated the usual way. Otherwise it will return here.
+            bool should_use = calculateNearEnemyDirection(x,y,mat_g);
+            if (should_use) {
+                return;
+            }
+        }
 	
         unsigned char army = m_soldiers(x, y).army();
 
@@ -423,7 +423,6 @@ private:
         }
 
         // subtract the minimum distance from all the distances and then normalize
-        // TODO: ensure that all the values in the matrix are non-zero
         sum_distance = (3 * 3 * max_distance) - sum_distance;
         if (std::fabs(sum_distance - 0.0) > FLOAT_EPSILON) {
             for (unsigned char i = 0; i < 3 * 3; ++i) {
@@ -437,8 +436,8 @@ private:
     bool
     calculateNearEnemyDirection(const std::size_t x, const std::size_t y, float* const mat_g) const
     {
-	    // enemy army
-	unsigned char e_army = m_soldiers(x,y).enemy();
+        // enemy army
+        unsigned char e_army = m_soldiers(x,y).enemy();
         float sum_neighbors = 0.0;
         // first store the neighbor counts in the k-neighborhood
         for (unsigned char i = 0; i < 3; ++i) {
@@ -456,11 +455,10 @@ private:
 
         // if there are no enemy neighbors nearby, should not be used
         if (sum_neighbors==0) {
-		return false;
-	}
+            return false;
+        }
         if (std::fabs(sum_neighbors - 0.0) > FLOAT_EPSILON) {
             // now normalize based on the total sum of counts
-            // TODO: ensure that all the values in the matrix are non-zero
             for (unsigned char i = 0; i < 3 * 3; ++i) {
                 mat_g[i] /= sum_neighbors;
             }
@@ -500,16 +498,16 @@ private:
     
     void calculateMovementMatrix(const std::size_t x, const std::size_t y, float* const mat_m) const
     {
-	    unsigned char a = m_lastmove(x,y);
-	    unsigned char t = a + a/4;
-	    unsigned char i = t/3;
-	    unsigned char j = t%3;
-	    for (unsigned char p=0; p<3; p++) {
-		    for (unsigned char q=0; q<3; q++) {
-			    mat_m[p*3+q] = 0;
-		    }
-	    }
-	    mat_m[i*3+j]=1;
+        unsigned char a = m_lastmove(x,y);
+        unsigned char t = a + a/4;
+        unsigned char i = t/3;
+        unsigned char j = t%3;
+        for (unsigned char p=0; p<3; p++) {
+          for (unsigned char q=0; q<3; q++) {
+            mat_m[p*3+q] = 0;
+          }
+        }
+        mat_m[i*3+j]=1;
     }
 
     /// calculate transitional probabilities for a soldier, based on a soldier attributes, local and global preference matrix
