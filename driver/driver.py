@@ -19,21 +19,26 @@ accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
         #accessibility[x][y] = 0
 
 
-#ff.printGrid()
+#bf.printGrid()
 
-ff = BattleField(accessibility)
-#ff = BattleField(H, W)
+bf = BattleField(accessibility)
+#bf = BattleField(H, W)
 
-for y in xrange(0, W):
-    ff.setSoldier(0, y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
-    ff.setSoldier(1, y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
-    ff.setSoldier(H - 2, y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
-    ff.setSoldier(H - 1, y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255)))
+def setupField():
+    soldiers = []
+    # army 0
+    soldiers.extend((0 * W + y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
+    soldiers.extend((1 * W + y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
+    # army 1
+    soldiers.extend(((H - 2) * W + y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
+    soldiers.extend(((H - 1) * W + y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
 
-ff.setTarget(0, H, W / 2)
-ff.setTarget(1, 0, W / 2)
+    bf.setSoldiers(soldiers)
 
-ff.initializeNeighborhood()
+    bf.setTarget(0, H, W / 2)
+    bf.setTarget(1, 0, W / 2)
+
+setupField()
 
 
 class PixelFill(object):
@@ -113,7 +118,7 @@ class FrameBuilder(object):
         # create new frame
         self.frame = gizeh.Surface.from_image(self.field)
         # move soldiers and obtain their new positions
-        ff.move(self.soldiers)
+        bf.move(self.soldiers)
         # draw soldiers, in new position, on the field
         soldiers = []
         it = numpy.nditer(self.soldiers, op_flags = ['readwrite'], flags = ['multi_index'])
@@ -128,7 +133,7 @@ class FrameBuilder(object):
 
     def kill(self):
         # kill soldiers and find out which soldiers are killed
-        ff.kill(self.killed)
+        bf.kill(self.killed)
         # draw killed soldiers
         killed = []
         it = numpy.nditer(self.killed, op_flags = ['readwrite'], flags = ['multi_index'])

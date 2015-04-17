@@ -5,16 +5,19 @@
 #include "battle_field.hpp"
 %}
 
+%include <std_pair.i>
+%include <std_vector.i>
+
 %include "numpy.i"
 %init %{
 import_array();
 %}
 
-%numpy_typemaps(unsigned char, NPY_UBYTE, std::size_t)
-%apply (std::size_t DIM1, std::size_t DIM2, unsigned char* INPLACE_ARRAY2) {(std::size_t, std::size_t, unsigned char*)}
+%numpy_typemaps(unsigned char, NPY_UBYTE, size_t)
+%apply (size_t DIM1, size_t DIM2, unsigned char* INPLACE_ARRAY2) {(size_t, size_t, unsigned char*)}
 
-%numpy_typemaps(bool, NPY_BOOL, std::size_t)
-%apply (std::size_t DIM1, std::size_t DIM2, bool* INPLACE_ARRAY2) {(std::size_t, std::size_t, bool*)}
+%numpy_typemaps(bool, NPY_BOOL, size_t)
+%apply (size_t DIM1, size_t DIM2, bool* INPLACE_ARRAY2) {(size_t, size_t, bool*)}
 
 class Soldier {
 public:
@@ -34,20 +37,22 @@ public:
   Soldier(const Soldier&);
 };
 
+%template() std::pair<size_t, Soldier>;
+%template() std::vector<std::pair<size_t, Soldier> >;
 
 %nodefaultctor BattleField;
 class BattleField {
 public:
-  BattleField(std::size_t, std::size_t);
-  BattleField(std::size_t, std::size_t, unsigned char*);
-  void setSoldier(std::size_t, std::size_t, const Soldier&);
-  void setTarget(const unsigned char, const std::size_t, const std::size_t);
-  void initializeNeighborhood();
-  void move(std::size_t, std::size_t, unsigned char*);
+  BattleField(size_t, size_t);
+  BattleField(size_t, size_t, unsigned char*);
+  void setSoldiers(const std::vector<std::pair<size_t, Soldier> >&);
+  void setTarget(const unsigned char, const size_t, const size_t);
+  void move(size_t, size_t, unsigned char*);
   void move();
-  void kill(std::size_t, std::size_t, bool*);
+  void kill(size_t, size_t, bool*);
   void kill();
   void printGrid();
   ~BattleField();
 };
-%clear (std::size_t, std::size_t, unsigned char*);
+%clear (size_t, size_t, unsigned char*);
+

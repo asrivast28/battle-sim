@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     ff.setTarget(1, 10, 5); 
 
     // MUST be called before the start of iterations
-    ff.initializeNeighborhood();
+    ff.initializeNeighborCounts();
 
     int n_iter = 10;
     double sleep_secs = 0.5;

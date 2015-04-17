@@ -58,8 +58,8 @@ randomAtMax(int max) {
 // granulaty of measurement for float types
 const float FLOAT_EPSILON = std::numeric_limits<float>::epsilon();
 /// uniformly picks an index from an array consisting of probability distribution
-std::size_t
-pickIndex(float* const prob_dist, const std::size_t max_index)
+size_t
+pickIndex(float* const prob_dist, const size_t max_index)
 {
     std::partial_sum(prob_dist, prob_dist + max_index, prob_dist);
     //if (std::fabs(cum_dist[max_index - 1] - 1.0) > FLOAT_EPSILON) {
@@ -68,7 +68,7 @@ pickIndex(float* const prob_dist, const std::size_t max_index)
 
     float prob = uniformRandom();
     float prev_val = 0.0;
-    for (std::size_t i = 0; i < max_index; ++i) {
+    for (size_t i = 0; i < max_index; ++i) {
         if ((prob > prev_val) && ((prob <= prob_dist[i]))) {
             return i;
         }
@@ -86,7 +86,7 @@ private:
   static const unsigned char m_beta = 1;
 
 public:
-    BattleField(std::size_t nrows, std::size_t ncols)
+    BattleField(size_t nrows, size_t ncols)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
           m_claimed(nrows, ncols), m_probability(nrows, ncols),
@@ -108,7 +108,7 @@ public:
         m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
     }
 
-    BattleField(std::size_t nrows, std::size_t ncols, unsigned char* accessibility)
+    BattleField(size_t nrows, size_t ncols, unsigned char* accessibility)
         : m_nrows(nrows), m_ncols(ncols),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
           m_claimed(nrows, ncols), m_probability(nrows, ncols), m_lastmove(nrows, ncols)
@@ -147,24 +147,20 @@ public:
     }
 
     void
-    setSoldier(std::size_t x, std::size_t y, const Soldier& soldier) {
-        m_soldiers.at(x, y) = soldier;
-    }
-
-    void
-    setTarget(const unsigned char army, const std::size_t target_x, const std::size_t target_y)
-    {
-        m_target_x[army] = target_x;
-        m_target_y[army] = target_y;
+    setSoldiers(const std::vector<std::pair<size_t, Soldier> >& soldiers) {
+        for (std::vector<std::pair<size_t, Soldier> >::const_iterator s = soldiers.begin(); s != soldiers.end(); ++s) {
+            m_soldiers.at(s->first / m_ncols, s->first % m_ncols) = s->second;
+        }
+        initializeNeighborCounts();
     }
 
     /// initializes the extended neighborhood counts
     void
-    initializeNeighborhood()
+    initializeNeighborCounts()
     {
         // calculate the initial count of soldiers of both the armies in k-neighborhood
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
                     updateNeighborCounts(x, y, m_soldiers(x, y).army(), true);
                 }
@@ -173,14 +169,11 @@ public:
     }
 
     void
-    initializeLastmove() {
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
-                m_lastmove(x,y)=0;
-            }
-        }
+    setTarget(const unsigned char army, const size_t target_x, const size_t target_y)
+    {
+        m_target_x[army] = target_x;
+        m_target_y[army] = target_y;
     }
-
 
     void
     move() {
@@ -194,8 +187,8 @@ public:
         float trans_prob[3 * 3] = {};
 
         // claim-a-cell loop
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 // do the calculations only if there is a soldier in the current cell
                 if (!m_soldiers(x, y).empty()) {
                     // if the fourth param is true, goal is to destroy enemy. If nothing provided, false by default
@@ -209,8 +202,8 @@ public:
         }
 
         // conflict resolution loop
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 unsigned char claimed = m_claimed(x, y);
                 // resolve conflict if this cell is claimed by more than one soldier
                 if ((claimed > 0) && ((claimed & (claimed - 1)) != 0)) {
@@ -254,8 +247,8 @@ public:
         }
 
         // actual movement loop
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 // check if any soldier is moving to this cell
                 if (m_claimed(x, y) > 0) {
                     // move the chosen soldier to this cell
@@ -290,12 +283,12 @@ public:
     }
 
     void
-    move(std::size_t dim1, std::size_t dim2, unsigned char* soldiers)
+    move(size_t dim1, size_t dim2, unsigned char* soldiers)
     {
         move();
 
-        for (std::size_t x = 0; x < dim1; ++x) {
-            for (std::size_t y = 0; y < dim2; ++y) {
+        for (size_t x = 0; x < dim1; ++x) {
+            for (size_t y = 0; y < dim2; ++y) {
                 if (!m_soldiers(x, y).empty()) {
                     soldiers[x * m_ncols + y] = m_soldiers(x, y).army();
                 }
@@ -304,11 +297,11 @@ public:
     }
 
     void
-    kill(std::size_t dim1, std::size_t dim2, bool* killed)
+    kill(size_t dim1, size_t dim2, bool* killed)
     {
         // choose-a-kill loop
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
                     unsigned char army = m_soldiers(x, y).army();
                     unsigned char k = m_soldiers(x, y).killRadius();
@@ -351,8 +344,8 @@ public:
         }
 
         // actual kill loop
-        for (std::size_t x = 0; x < m_nrows; ++x) {
-            for (std::size_t y = 0; y < m_ncols; ++y) {
+        for (size_t x = 0; x < m_nrows; ++x) {
+            for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty() && (m_probability(x, y) > 0.0)) {
                     float s_self = m_soldiers(x, y).skill();
                     float p_survival = s_self / (m_probability(x, y) + s_self);
@@ -387,7 +380,7 @@ public:
 private:
     /// increase or decrease extended neighborhood counts for a cell
     void
-    updateNeighborCounts(const std::size_t x, const std::size_t y, const unsigned char army, const bool increase)
+    updateNeighborCounts(const size_t x, const size_t y, const unsigned char army, const bool increase)
     {
         for (unsigned char i = 0; i < 2 * m_k; ++i) {
             // decrease neighbor count in the neighborhood
@@ -405,7 +398,7 @@ private:
 
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
-    calculateGlobalPreference(const std::size_t x, const std::size_t y, float* const mat_g, bool destroy_enemy = false) const
+    calculateGlobalPreference(const size_t x, const size_t y, float* const mat_g, bool destroy_enemy = false) const
     {
         // if we want to destroy the enemy, calculate in a different way
         if (destroy_enemy) {
@@ -422,9 +415,9 @@ private:
         float sum_distance = 0.0;
         float max_distance = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
-              std::size_t diff_x = m_target_x[army] > (x + i) ? (m_target_x[army] - (x + i - 1)) : ((x + i - 1) - m_target_x[army]);
+              size_t diff_x = m_target_x[army] > (x + i) ? (m_target_x[army] - (x + i - 1)) : ((x + i - 1) - m_target_x[army]);
               for (unsigned char j = 0; j < 3; ++j) {
-                  std::size_t diff_y = m_target_y[army] > (y + j) ? (m_target_y[army] - (y + j - 1)) : ((y + j - 1) - m_target_y[army]);
+                  size_t diff_y = m_target_y[army] > (y + j) ? (m_target_y[army] - (y + j - 1)) : ((y + j - 1) - m_target_y[army]);
                   float distance = sqrt(pow(diff_x, 2.0) + pow(diff_y, 2.0));
                   mat_g[i * 3 + j] = distance;
                   sum_distance += distance;
@@ -446,7 +439,7 @@ private:
 
     // support function for calculating global matrix of preference, in case we want to destroy opponent's army
     bool
-    calculateNearEnemyDirection(const std::size_t x, const std::size_t y, float* const mat_g) const
+    calculateNearEnemyDirection(const size_t x, const size_t y, float* const mat_g) const
     {
         // enemy army
         unsigned char e_army = m_soldiers(x,y).enemy();
@@ -480,7 +473,7 @@ private:
 
     /// computes local preference matrix for a soldier, based on extended neighborhood
     void
-    calculateLocalPreference(const std::size_t x, const std::size_t y, float* const mat_l) const
+    calculateLocalPreference(const size_t x, const size_t y, float* const mat_l) const
     {
         unsigned char army = m_soldiers(x, y).army();
 
@@ -508,7 +501,7 @@ private:
         }
     }
 
-    void calculateMovementMatrix(const std::size_t x, const std::size_t y, float* const mat_m) const
+    void calculateMovementMatrix(const size_t x, const size_t y, float* const mat_m) const
     {
         unsigned char a = m_lastmove(x,y);
         unsigned char t = a + a/4;
@@ -524,7 +517,7 @@ private:
 
     /// calculate transitional probabilities for a soldier, based on a soldier attributes, local and global preference matrix
     void
-    calculateTransitionalProbabilities(const std::size_t x, const std::size_t y,
+    calculateTransitionalProbabilities(const size_t x, const size_t y,
                                        float* const mat_g, float* const mat_l, float* const mat_m,
                                        float* const trans_prob) const
     {
@@ -577,7 +570,7 @@ private:
 
     /// claim a cell for a soldier to which it wants to move in this timestep
     void
-    claimCell(const std::size_t x, const std::size_t y, float* const trans_prob)
+    claimCell(const size_t x, const size_t y, float* const trans_prob)
     {
         // relative index of the target cell
         unsigned char index = static_cast<unsigned char>(pickIndex(trans_prob, 3 * 3));
@@ -602,14 +595,14 @@ private:
 
 private:
     // number of rows
-    std::size_t m_nrows;
+    size_t m_nrows;
     // number of columns
-    std::size_t m_ncols;
+    size_t m_ncols;
 
 
     // target coordinates
-    std::size_t m_target_x[2];
-    std::size_t m_target_y[2];
+    size_t m_target_x[2];
+    size_t m_target_y[2];
 
     // preference given to the last move of the soldier
     // float p;
