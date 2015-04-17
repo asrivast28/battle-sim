@@ -106,6 +106,9 @@ public:
         // initialize the extended neighborhood counts
         m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
         m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
+
+        m_total_soldiers[0] = 0;
+        m_total_soldiers[1] = 0;
     }
 
     BattleField(size_t nrows, size_t ncols, unsigned char* accessibility)
@@ -127,16 +130,21 @@ public:
         // initialize the extended neighborhood counts
         m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
         m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
+
+        m_total_soldiers[0] = 0;
+        m_total_soldiers[1] = 0;
     }
 
     // access to the matrix of sodiers
     const matrix<Soldier>&
-    mat() const {
+    mat() const
+    {
         return m_soldiers;
     }
 
     matrix<Soldier>&
-    mat() {
+    mat()
+    {
         return m_soldiers;
     }
 
@@ -147,7 +155,8 @@ public:
     }
 
     void
-    setSoldiers(const std::vector<std::pair<size_t, Soldier> >& soldiers) {
+    setSoldiers(const std::vector<std::pair<size_t, Soldier> >& soldiers)
+    {
         for (std::vector<std::pair<size_t, Soldier> >::const_iterator s = soldiers.begin(); s != soldiers.end(); ++s) {
             m_soldiers.at(s->first / m_ncols, s->first % m_ncols) = s->second;
         }
@@ -163,6 +172,7 @@ public:
             for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
                     updateNeighborCounts(x, y, m_soldiers(x, y).army(), true);
+                    ++m_total_soldiers[m_soldiers(x, y).army()];
                 }
             }
         }
@@ -176,7 +186,8 @@ public:
     }
 
     void
-    move() {
+    move()
+    {
         // global matrix of preference
         float mat_g[3 * 3] = {};
         // local matrix of preference
@@ -356,11 +367,12 @@ public:
                         // TODO: collect statistics for the soldier before killing
                         // kill the soldier
                         //DEBUG_MSG("killing (%zd, %zd)\n", x, y);
-                        updateNeighborCounts(x, y, m_soldiers(x, y).army(), false);
                         m_soldiers(x, y).kill();
+                        updateNeighborCounts(x, y, m_soldiers(x, y).army(), false);
                         if (killed != NULL) {
                             killed[x * m_ncols + y] = true;
                         }
+                        --m_total_soldiers[m_soldiers(x, y).army()];
                     }
                 }
             }
@@ -603,6 +615,9 @@ private:
     // target coordinates
     size_t m_target_x[2];
     size_t m_target_y[2];
+
+    // total number of alive soldiers
+    size_t m_total_soldiers[2];
 
     // preference given to the last move of the soldier
     // float p;
