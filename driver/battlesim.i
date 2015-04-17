@@ -42,7 +42,7 @@ public:
   void setSoldier(std::size_t, std::size_t, const Soldier&);
   void setTarget(const unsigned char, const std::size_t, const std::size_t);
   void initializeNeighborhood();
-  void armyGrid(std::size_t, std::size_t, unsigned char*);
+  void getSoldiers(std::size_t, std::size_t, unsigned char*);
   void printGrid();
   ~FloorField();
 };
