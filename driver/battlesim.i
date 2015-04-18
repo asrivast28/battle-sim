@@ -51,6 +51,12 @@ public:
         ANNIHILATE_ENEMY
     };
 
+    enum Status {
+        ONGOING,
+        WON,
+        TIED
+    };
+
 public:
     BattleField(const size_t, const size_t);
     BattleField(size_t, size_t, unsigned char*);
@@ -60,7 +66,9 @@ public:
     void move(std::vector<std::pair<size_t, unsigned char> >&);
     size_t kill(std::vector<size_t>&, bool = true);
     size_t kill();
-    size_t getSoldierCount(const unsigned char);
+    size_t soldierCount(const unsigned char) const;
+    Status status() const;
+    unsigned char winner() const;
     void printGrid();
     ~BattleField();
 };

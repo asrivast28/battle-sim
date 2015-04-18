@@ -95,7 +95,7 @@ class FrameBuilder(object):
     def __init__(self, fill):
         self.fill = fill
         self.field = self.createField(accessibility)
-        count = bf.getSoldierCount(0) + bf.getSoldierCount(1)
+        count = bf.soldierCount(0) + bf.soldierCount(1)
         self.soldiers = battlesim.SoldierPositionVector(count)
         self.killed = battlesim.KilledPositionVector()
         self.i = 0
@@ -121,7 +121,7 @@ class FrameBuilder(object):
         self.frame = gizeh.Surface.from_image(self.field)
         # move soldiers and obtain their new positions
         bf.move(self.soldiers)
-        count = bf.getSoldierCount(0) + bf.getSoldierCount(1)
+        count = bf.soldierCount(0) + bf.soldierCount(1)
         # draw soldiers, in new position, on the field
         soldiers = []
         it = iter(self.soldiers)
@@ -146,14 +146,15 @@ class FrameBuilder(object):
         gizeh.Group(killed).draw(self.frame)
 
     def __call__(self, t):
-        if self.i % 2 == 0:
+        if bf.status() != bf.ONGOING:
+            pass
+        elif self.i % 2 == 0:
             self.move()
         else:
             self.kill()
         self.i += 1
         # create a new surface for each frame
         return self.frame.get_npimage()
-
 
 clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 80)
 #clip = mpy.VideoClip(FrameBuilder(PixelFill()), duration=50)

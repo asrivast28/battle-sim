@@ -91,9 +91,16 @@ public:
         ANNIHILATE_ENEMY
     };
 
+    enum Status {
+        ONGOING,
+        WON,
+        TIED
+    };
+
 public:
     BattleField(const size_t nrows, const size_t ncols)
         : m_nrows(nrows), m_ncols(ncols), m_target(ANNIHILATE_ENEMY),
+          m_status(ONGOING), m_winner(-1),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
           m_claimed(nrows, ncols), m_probability(nrows, ncols),
           m_lastmove(nrows, ncols)
@@ -119,6 +126,7 @@ public:
 
     BattleField(size_t nrows, size_t ncols, unsigned char* accessibility)
         : m_nrows(nrows), m_ncols(ncols), m_target(ANNIHILATE_ENEMY),
+          m_status(ONGOING), m_winner(-1),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
           m_claimed(nrows, ncols), m_probability(nrows, ncols), m_lastmove(nrows, ncols)
     {
@@ -303,6 +311,21 @@ public:
                 m_probability(x, y) = 0.0;
             }
         }
+        // check if target has been achieved
+        if ((m_target == CAPTURE_FLAG) && (m_status == ONGOING)) {
+            bool captured[2] = {false, false};
+            for (unsigned char i = 0; i < 2; ++i) {
+                const Soldier& s = m_soldiers(m_flag_x[i], m_flag_y[i]);
+                captured[i] = !s.empty() && (s.army() == i);
+            }
+            if (captured[0] && captured[1]) {
+                m_status = TIED;
+            }
+            else if (captured[0] || captured[1]) {
+                m_status = WON;
+                m_winner = captured[0] ? 0 : 1;
+            }
+        }
     }
 
     void
@@ -322,7 +345,7 @@ public:
         }
     }
 
-    size_t 
+    size_t
     kill(std::vector<size_t>& positions, bool record = true)
     {
         // choose-a-kill loop
@@ -400,10 +423,21 @@ public:
                 }
             }
         }
+
+        // check if target has been achieved
+        if ((m_target == ANNIHILATE_ENEMY) && (m_status == ONGOING)) {
+            if ((m_total_soldiers[0] == 0) && (m_total_soldiers[1] == 0)) {
+                m_status = TIED;
+            }
+            else if ((m_total_soldiers[0] == 0) || (m_total_soldiers[1] == 0)) {
+                m_status = WON;
+                m_winner = (m_total_soldiers[0] == 0) ? 1 : 0;
+            }
+        }
         return count;
     }
 
-    size_t 
+    size_t
     kill()
     {
         std::vector<size_t> dummy;
@@ -411,9 +445,21 @@ public:
     }
 
     size_t
-    getSoldierCount(const unsigned char army)
+    soldierCount(const unsigned char army) const
     {
         return m_total_soldiers[army];
+    }
+
+    Status
+    status() const
+    {
+        return m_status;
+    }
+
+    unsigned char
+    winner() const
+    {
+        return m_winner;
     }
 
     /// Destructor
@@ -537,7 +583,6 @@ private:
 
         if (std::fabs(sum_neighbors - 0.0) > FLOAT_EPSILON) {
             // now normalize based on the total sum of counts
-            // TODO: ensure that all the values in the matrix are non-zero
             for (unsigned char i = 0; i < 3 * 3; ++i) {
                 mat_l[i] /= sum_neighbors;
             }
@@ -645,6 +690,8 @@ private:
     // Type of target
     Target m_target;
 
+    Status m_status;
+    unsigned char m_winner;
 
     // flag coordinates
     size_t m_flag_x[2];
