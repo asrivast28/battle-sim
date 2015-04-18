@@ -67,6 +67,9 @@ class BattleField(battlesim.BattleField):
     """
     @staticmethod
     def createField():
+        """
+        Create an accessibility matrix for the field.
+        """
         accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
         #for x in xrange(90, 110):
             #for y in xrange(90, 110):
@@ -91,6 +94,10 @@ class BattleField(battlesim.BattleField):
         self.setTarget(self.ANNIHILATE_ENEMY)
 
     def __init__(self, accessibility):
+        """
+        Initializes the battlefield with given accessibility matrix.
+        Also sets up soldiers and targets.
+        """
         super(BattleField, self).__init__(accessibility)
         self.__setTarget()
         self.__setSoldiers()
@@ -101,6 +108,9 @@ class BattleField(battlesim.BattleField):
         self.__killed = battlesim.KilledPositionVector()
 
     def move(self):
+        """
+        Returns an iterator to soldier positions after the move.
+        """
         super(BattleField, self).move(self.__soldiers)
         count = self.soldierCount(0) + self.soldierCount(1)
         it = iter(self.__soldiers)
@@ -108,6 +118,9 @@ class BattleField(battlesim.BattleField):
             yield it.next()
 
     def kill(self):
+        """
+        Returns an iterator to killed soldiers after the kill.
+        """
         count = super(BattleField, self).kill(self.__killed)
         it = iter(self.__killed)
         for x in xrange(count):
