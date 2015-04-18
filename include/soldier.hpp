@@ -16,10 +16,10 @@ class Soldier {
 public:
     // enumeration type for specifying the type of this soldier
     enum Type {
+      EMPTY = 0,
       LEADER,
       SWORDSMAN,
-      ARCHER,
-      EMPTY
+      ARCHER
     };
 
     // data type for storing skill level
@@ -51,6 +51,13 @@ public:
     army() const
     {
         return m_army ? 1 : 0;
+    }
+
+    /// returns type of the soldier 
+    Type
+    type() const
+    {
+        return m_type; 
     }
 
     /// returns index of the enemy army

@@ -339,7 +339,10 @@ public:
         for (size_t x = 0; x < m_nrows; ++x) {
             for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
-                    positions[count++] = std::make_pair(x * m_ncols + y, m_soldiers(x, y).army());
+                    const Soldier& s = m_soldiers(x, y);
+                    unsigned char info = s.army() << 7;
+                    info = info | static_cast<unsigned char>(s.type());
+                    positions[count++] = std::make_pair(x * m_ncols + y, info); 
                 }
             }
         }

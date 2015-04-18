@@ -10,9 +10,6 @@ import moviepy.editor as mpy
 
 seed(0)
 
-H, W = 40, 80
-
-
 class PixelFill(object):
     """
     Metadata for filling the image with pixels.
@@ -66,7 +63,7 @@ class BattleField(battlesim.BattleField):
     Light wrapper around C++ side BattleField class.
     """
     @staticmethod
-    def createField():
+    def createField(H, W):
         """
         Create an accessibility matrix for the field.
         """
@@ -76,18 +73,20 @@ class BattleField(battlesim.BattleField):
                 #accessibility[x][y] = 0
         return accessibility
 
-    def __setSoldiers(self):
+    def __setSoldiers(self, H, W):
         soldiers = []
         # army 0
-        soldiers.extend((0 * W + y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
+        soldiers.extend((0 * W + y, Soldier(0, Soldier.ARCHER, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
         soldiers.extend((1 * W + y, Soldier(0, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
+        soldiers.extend((4 * W + y, Soldier(0, Soldier.LEADER, 255, 255)) for y in xrange(0, W, 10))
         # army 1
+        soldiers.extend(((H - 5) * W + y, Soldier(1, Soldier.LEADER, 255, 255)) for y in xrange(0, W, 10))
         soldiers.extend(((H - 2) * W + y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
-        soldiers.extend(((H - 1) * W + y, Soldier(1, Soldier.SWORDSMAN, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
+        soldiers.extend(((H - 1) * W + y, Soldier(1, Soldier.ARCHER, randint(0, 255), randint(0, 255))) for y in xrange(0, W))
 
         self.setSoldiers(soldiers)
 
-    def __setTarget(self):
+    def __setTarget(self, H, W):
         self.setFlag(0, H, W / 2)
         self.setFlag(1, 0, W / 2)
 
@@ -99,8 +98,9 @@ class BattleField(battlesim.BattleField):
         Also sets up soldiers and targets.
         """
         super(BattleField, self).__init__(accessibility)
-        self.__setTarget()
-        self.__setSoldiers()
+        H, W = accessibility.shape
+        self.__setSoldiers(H, W)
+        self.__setTarget(H, W)
         count = self.soldierCount(0) + self.soldierCount(1)
         # list for storing current position of soldiers
         self.__soldiers = battlesim.SoldierPositionVector(count)
@@ -115,7 +115,10 @@ class BattleField(battlesim.BattleField):
         count = self.soldierCount(0) + self.soldierCount(1)
         it = iter(self.__soldiers)
         for x in xrange(count):
-            yield it.next()
+            pos, info = it.next()
+            army = (info & (1 << 7)) >> 7
+            kind = info ^ (army << 7)
+            yield pos, army, kind
 
     def kill(self):
         """
@@ -143,16 +146,17 @@ class FrameBuilder(object):
                 obstructions.append(gizeh.square(self.__fill.size, xy = (it.multi_index[1], it.multi_index[0]), fill = color))
             it.iternext()
         obstructions = gizeh.Group(obstructions)
-        field = gizeh.Surface(W * self.__fill.scale, H * self.__fill.scale, bg_color = (1, 1, 1))
+        field = gizeh.Surface(self.__dims[1] * self.__fill.scale, self.__dims[0] * self.__fill.scale, bg_color = (1, 1, 1))
         obstructions.draw(field)
         return field.get_npimage()
 
     def __init__(self, fill):
+        self.__dims = (40, 80)
         # fill specifications
         self.__fill = fill
 
         # setup battle
-        accessibility = BattleField.createField()
+        accessibility = BattleField.createField(*self.__dims)
         self.__bf = BattleField(accessibility)
         # iteration counter
         self.__iter = 0
@@ -165,15 +169,17 @@ class FrameBuilder(object):
         self.__frame = gizeh.Surface.from_image(self.__field)
         # move soldiers and draw them in their new positions
         soldiers = []
-        for pos, army in self.__bf.move():
+        W = self.__dims[1]
+        for pos, army, kind in self.__bf.move():
             xy = [i * self.__fill.scale for i in (pos % W, pos / W)]
-            fill = self.__fill.mapping[army][Soldier.SWORDSMAN]
+            fill = self.__fill.mapping[army][kind]
             soldiers.append(gizeh.square(self.__fill.size, xy = xy, fill = fill))
         gizeh.Group(soldiers).draw(self.__frame)
 
     def kill(self):
         # kill soldiers and indicate killed soldiers on the previous frame
         killed = []
+        W = self.__dims[1]
         for pos in self.__bf.kill():
             xy = [i * self.__fill.scale for i in (pos % W, pos / W)]
             fill = self.__fill.dead
@@ -183,6 +189,7 @@ class FrameBuilder(object):
     def __call__(self, t):
         if self.__bf.status() != BattleField.ONGOING:
             # declare that the war is finished
+            H, W = self.__dims
             gizeh.text('FIN!', 'Amiri', H, xy = ((W / 2) * self.__fill.scale, (H / 2) * self.__fill.scale)).draw(self.__frame)
         elif self.__iter % 2 == 0:
             # start off by moving
@@ -194,7 +201,7 @@ class FrameBuilder(object):
         # return the image of the current frame 
         return self.__frame.get_npimage()
 
-clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 80)
+clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 150)
 #clip = mpy.VideoClip(FrameBuilder(PixelFill()), duration=50)
 clip.write_videofile("battle.mp4", fps=2)
 #clip.write_gif("circle.gif", fps=2, opt="OptimizePlus", fuzz=10)
