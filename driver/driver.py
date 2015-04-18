@@ -1,5 +1,5 @@
 import battlesim
-from battlesim import Soldier 
+from battlesim import Soldier
 
 import numpy
 from random import randint, seed
@@ -161,7 +161,7 @@ class FrameBuilder(object):
         # iteration counter
         self.__iter = 0
 
-        # create frame for empty field 
+        # create frame for empty field
         self.__field = self.__createFieldFrame(accessibility)
 
     def move(self):
@@ -198,7 +198,7 @@ class FrameBuilder(object):
             # then killing
             self.kill()
         self.__iter += 1
-        # return the image of the current frame 
+        # return the image of the current frame
         return self.__frame.get_npimage()
 
 clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 150)
