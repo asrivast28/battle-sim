@@ -51,6 +51,8 @@ class PixelFill(object):
         self.size = 1
         self.mapping = {0 : {}, 1 : {}}
 
+        self.win = {0 : (0, 1, 0), 1 : (0, 0, 1)}
+
         self.mapping[0][Soldier.LEADER] = (0, 1, 0)
         self.mapping[1][Soldier.LEADER] = (0, 0, 1)
 
@@ -68,6 +70,7 @@ class IconFill(PixelFill):
     Metadata for filling the image with icons.
     """
     def __init__(self):
+        super(IconFill, self).__init__()
         self.scale = 10
         self.size = 20
         self.mapping = {0: {}, 1: {}}
@@ -147,7 +150,7 @@ class FrameBuilder(object):
 
     def __call__(self, t):
         if bf.status() != bf.ONGOING:
-            pass
+            gizeh.text('FIN!', 'Amiri', H, xy = ((W / 2) * self.fill.scale, (H / 2) * self.fill.scale)).draw(self.frame)
         elif self.i % 2 == 0:
             self.move()
         else:
@@ -158,5 +161,5 @@ class FrameBuilder(object):
 
 clip = mpy.VideoClip(FrameBuilder(IconFill()), duration = 80)
 #clip = mpy.VideoClip(FrameBuilder(PixelFill()), duration=50)
-#clip.write_videofile("battle.mp4", fps=2)
-clip.write_gif("circle.gif", fps=2, opt="OptimizePlus", fuzz=10)
+clip.write_videofile("battle.mp4", fps=2)
+#clip.write_gif("circle.gif", fps=2, opt="OptimizePlus", fuzz=10)
