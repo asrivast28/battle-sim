@@ -22,19 +22,19 @@ import_array();
 class Soldier {
 public:
     enum Type {
-      LEADER,
-      SWORDSMAN,
-      ARCHER,
-      EMPTY
+        LEADER,
+        SWORDSMAN,
+        ARCHER,
+        EMPTY
     };
 
     typedef unsigned char SkillType;
     typedef unsigned char AggressionType;
 
 public:
-  Soldier();
-  Soldier(unsigned char, Type, SkillType, AggressionType);
-  Soldier(const Soldier&);
+    Soldier();
+    Soldier(const unsigned char, const Type, const SkillType, const AggressionType);
+    Soldier(const Soldier&);
 };
 
 %template() std::pair<size_t, unsigned char>;
@@ -46,15 +46,22 @@ public:
 %nodefaultctor BattleField;
 class BattleField {
 public:
-  BattleField(size_t, size_t);
-  BattleField(size_t, size_t, unsigned char*);
-  void setSoldiers(const std::vector<std::pair<size_t, Soldier> >&);
-  void setTarget(const unsigned char, const size_t, const size_t);
-  void move(std::vector<std::pair<size_t, unsigned char> >&);
-  size_t kill(std::vector<size_t>&, bool = true);
-  size_t kill();
-  size_t getSoldierCount(const unsigned char);
-  void printGrid();
-  ~BattleField();
+    enum Target {
+        CAPTURE_FLAG,
+        ANNIHILATE_ENEMY
+    };
+
+public:
+    BattleField(const size_t, const size_t);
+    BattleField(size_t, size_t, unsigned char*);
+    void setTarget(const Target);
+    void setSoldiers(const std::vector<std::pair<size_t, Soldier> >&);
+    void setFlag(const unsigned char, const size_t, const size_t);
+    void move(std::vector<std::pair<size_t, unsigned char> >&);
+    size_t kill(std::vector<size_t>&, bool = true);
+    size_t kill();
+    size_t getSoldierCount(const unsigned char);
+    void printGrid();
+    ~BattleField();
 };
 %clear (size_t, size_t, unsigned char*);

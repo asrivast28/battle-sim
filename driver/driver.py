@@ -34,8 +34,10 @@ def setupField():
 
     bf.setSoldiers(soldiers)
 
-    bf.setTarget(0, H, W / 2)
-    bf.setTarget(1, 0, W / 2)
+    bf.setTarget(BattleField.ANNIHILATE_ENEMY)
+
+    bf.setFlag(0, H, W / 2)
+    bf.setFlag(1, 0, W / 2)
 
 setupField()
 

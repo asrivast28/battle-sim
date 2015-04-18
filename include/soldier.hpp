@@ -35,7 +35,7 @@ public:
     { }
 
     /// constructor
-    Soldier(unsigned char army, Type type, SkillType skill, AggressionType aggression)
+    Soldier(const unsigned char army, const Type type, const SkillType skill, const AggressionType aggression)
         : m_army(army == 1), m_type(type),
           m_skill(skill), m_aggression(aggression)
     { }

@@ -86,18 +86,24 @@ private:
   static const unsigned char m_beta = 1;
 
 public:
-    BattleField(size_t nrows, size_t ncols)
-        : m_nrows(nrows), m_ncols(ncols),
+    enum Target {
+        CAPTURE_FLAG,
+        ANNIHILATE_ENEMY
+    };
+
+public:
+    BattleField(const size_t nrows, const size_t ncols)
+        : m_nrows(nrows), m_ncols(ncols), m_target(ANNIHILATE_ENEMY),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
           m_claimed(nrows, ncols), m_probability(nrows, ncols),
           m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
-        m_target_x[0] = 0;
-        m_target_y[0] = 0;
+        m_flag_x[0] = 0;
+        m_flag_y[0] = 0;
 
-        m_target_x[1] = 0;
-        m_target_y[1] = 0;
+        m_flag_x[1] = 0;
+        m_flag_y[1] = 0;
 
         // initialize the dynamic field matrices
         m_dynamic[0] = matrix<unsigned char>(nrows, ncols, 1);
@@ -112,16 +118,16 @@ public:
     }
 
     BattleField(size_t nrows, size_t ncols, unsigned char* accessibility)
-        : m_nrows(nrows), m_ncols(ncols),
+        : m_nrows(nrows), m_ncols(ncols), m_target(ANNIHILATE_ENEMY),
           m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
           m_claimed(nrows, ncols), m_probability(nrows, ncols), m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
-        m_target_x[0] = 0;
-        m_target_y[0] = 0;
+        m_flag_x[0] = 0;
+        m_flag_y[0] = 0;
 
-        m_target_x[1] = 0;
-        m_target_y[1] = 0;
+        m_flag_x[1] = 0;
+        m_flag_y[1] = 0;
 
         // initialize the dynamic field matrices
         m_dynamic[0] = matrix<unsigned char>(nrows, ncols, 1);
@@ -163,6 +169,12 @@ public:
         initializeNeighborCounts();
     }
 
+    void
+    setTarget(const Target target)
+    {
+        m_target = target;
+    }
+
     /// initializes the extended neighborhood counts
     void
     initializeNeighborCounts()
@@ -179,10 +191,10 @@ public:
     }
 
     void
-    setTarget(const unsigned char army, const size_t target_x, const size_t target_y)
+    setFlag(const unsigned char army, const size_t flag_x, const size_t flag_y)
     {
-        m_target_x[army] = target_x;
-        m_target_y[army] = target_y;
+        m_flag_x[army] = flag_x;
+        m_flag_y[army] = flag_y;
     }
 
     void
@@ -203,7 +215,7 @@ public:
                 // do the calculations only if there is a soldier in the current cell
                 if (!m_soldiers(x, y).empty()) {
                     // if the fourth param is true, goal is to destroy enemy. If nothing provided, false by default
-                    calculateGlobalPreference(x, y, mat_g, true);
+                    calculateGlobalPreference(x, y, mat_g);
                     calculateLocalPreference(x, y, mat_l);
                     calculateMovementMatrix(x,y,mat_m);
                     calculateTransitionalProbabilities(x, y, mat_g, mat_l, mat_m, trans_prob);
@@ -429,10 +441,10 @@ private:
 
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
-    calculateGlobalPreference(const size_t x, const size_t y, float* const mat_g, bool destroy_enemy = false) const
+    calculateGlobalPreference(const size_t x, const size_t y, float* const mat_g) const
     {
         // if we want to destroy the enemy, calculate in a different way
-        if (destroy_enemy) {
+        if (m_target == ANNIHILATE_ENEMY) {
             // if there is no enemy nearby, false will be returned and the matrix will be calculated the usual way. Otherwise it will return here.
             bool should_use = calculateNearEnemyDirection(x,y,mat_g);
             if (should_use) {
@@ -446,9 +458,9 @@ private:
         float sum_distance = 0.0;
         float max_distance = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
-              size_t diff_x = m_target_x[army] > (x + i) ? (m_target_x[army] - (x + i - 1)) : ((x + i - 1) - m_target_x[army]);
+              size_t diff_x = m_flag_x[army] > (x + i) ? (m_flag_x[army] - (x + i - 1)) : ((x + i - 1) - m_flag_x[army]);
               for (unsigned char j = 0; j < 3; ++j) {
-                  size_t diff_y = m_target_y[army] > (y + j) ? (m_target_y[army] - (y + j - 1)) : ((y + j - 1) - m_target_y[army]);
+                  size_t diff_y = m_flag_y[army] > (y + j) ? (m_flag_y[army] - (y + j - 1)) : ((y + j - 1) - m_flag_y[army]);
                   float distance = sqrt(pow(diff_x, 2.0) + pow(diff_y, 2.0));
                   mat_g[i * 3 + j] = distance;
                   sum_distance += distance;
@@ -490,7 +502,7 @@ private:
         }
 
         // if there are no enemy neighbors nearby, should not be used
-        if (sum_neighbors==0) {
+        if (sum_neighbors == 0) {
             return false;
         }
         if (std::fabs(sum_neighbors - 0.0) > FLOAT_EPSILON) {
@@ -630,10 +642,13 @@ private:
     // number of columns
     size_t m_ncols;
 
+    // Type of target
+    Target m_target;
 
-    // target coordinates
-    size_t m_target_x[2];
-    size_t m_target_y[2];
+
+    // flag coordinates
+    size_t m_flag_x[2];
+    size_t m_flag_y[2];
 
     // total number of alive soldiers
     size_t m_total_soldiers[2];
