@@ -342,7 +342,7 @@ public:
                     const Soldier& s = m_soldiers(x, y);
                     unsigned char info = s.army() << 7;
                     info = info | static_cast<unsigned char>(s.type());
-                    positions[count++] = std::make_pair(x * m_ncols + y, info); 
+                    positions[count++] = std::make_pair(x * m_ncols + y, info);
                 }
             }
         }
@@ -356,28 +356,15 @@ public:
             for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
                     unsigned char army = m_soldiers(x, y).army();
-                    unsigned char k = m_soldiers(x, y).killRadius();
+                    unsigned char r = m_soldiers(x, y).killRadius();
                     std::vector<std::pair<unsigned char, unsigned char> > potentials;
-                    // scan the cells on kill rectangle and record all the enemy soldiers
-                    for (unsigned char i = 0; i < 2; ++i) {
-                        if ((x + k * i >= k) && (x + k * (i - 1) < m_nrows)) {
-                            for (unsigned char j = 0; j < 2 * k; ++j) {
-                                if ((y + j >= k) && (y + j - k < m_ncols)) {
-                                    const Soldier& soldier = m_soldiers(x + k * (i - 1), y + j - k);
-                                    if (soldier.army() != army) {
-                                        potentials.push_back(std::make_pair(i * k, j));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    for (unsigned char j = 0; j < 2; ++j) {
-                        if ((y + k * j >= k) && (y + k * (j - 1) < m_ncols)) {
-                            for (unsigned char i = 0; i < 2 * k; ++i) {
-                                if ((x + i >= k) && (x + i - k < m_nrows)) {
-                                    const Soldier& soldier = m_soldiers(x + i - k, y + (j * k) - k);
-                                    if (soldier.army() != army) {
-                                        potentials.push_back(std::make_pair(i, j * k));
+                    // scan the cells in kill radius and record all the enemy soldiers
+                    for (unsigned char i = 0; i < 2 * r; ++i) {
+                        if ((x + i >= r) && (x + i - r < m_nrows)) {
+                            for (unsigned char j = 0; j < 2 * r; ++j) {
+                                if ((y + j >= r) && (y + j - r < m_ncols)) {
+                                    if (m_soldiers(x + i - r, y + j - r).army() != army) {
+                                        potentials.push_back(std::make_pair(i, j));
                                     }
                                 }
                             }
@@ -389,7 +376,7 @@ public:
                         unsigned char i = potentials[index].first;
                         unsigned char j = potentials[index].second;
                         // add to the kill probability of the soldier
-                        m_probability(x + i - k, y + j - k) += m_soldiers(x, y).skill();
+                        m_probability(x + i - r, y + j - r) += m_soldiers(x, y).skill();
                     }
                 }
             }
@@ -399,7 +386,7 @@ public:
         size_t count = 0;
         for (size_t x = 0; x < m_nrows; ++x) {
             for (size_t y = 0; y < m_ncols; ++y) {
-                if (!m_soldiers(x, y).empty() && (m_probability(x, y) > 0.0)) {
+                if (!m_soldiers(x, y).empty() && (std::fabs(m_probability(x, y) - 0.0) > FLOAT_EPSILON)) {
                     float s_self = m_soldiers(x, y).skill();
                     float p_survival = s_self / (m_probability(x, y) + s_self);
                     // pick a uniform random number in the range [0.0, 1.0]
@@ -423,6 +410,7 @@ public:
                         }
                         --m_total_soldiers[army];
                     }
+                    m_probability(x, y) = 0.0;
                 }
             }
         }
