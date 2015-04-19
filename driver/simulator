@@ -83,13 +83,16 @@ class FrameBuilder(object):
         obstructions.draw(field)
         return field.get_npimage()
 
-    def __init__(self, image, fill):
-        import itertools, png
-        r = png.Reader(filename = image)
-        W, H, pngdata, meta = r.asDirect()
-        assert meta['greyscale']
-        accessibility = numpy.vstack(itertools.imap(numpy.uint8, pngdata))
-        self.__dims = (H, W)
+    def __init__(self, fill, image = None, accessibility = None):
+        if image is not None:
+            import itertools, png
+            r = png.Reader(filename = image)
+            W, H, pngdata, meta = r.asDirect()
+            assert meta['greyscale']
+            accessibility = numpy.vstack(itertools.imap(numpy.uint8, pngdata))
+        if accessibility is None:
+            raise RuntimeError
+        self.__dims = accessibility.shape
         # fill specifications
         self.__fill = fill
 
