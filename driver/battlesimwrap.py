@@ -67,16 +67,21 @@ class BattleField(battlesim.BattleField):
 
         self.setTarget(self.ANNIHILATE_ENEMY)
 
-    def __init__(self, accessibility):
+    def __init__(self, accessibility, soldiers=None, initTarget=False):
         """
         Initializes the battlefield with given accessibility matrix.
         Also sets up soldiers and targets.
         """
         super(BattleField, self).__init__(accessibility)
         H, W = accessibility.shape
-        self.__setSoldiers(H, W)
-        self.__setTarget(H, W)
+        if soldiers:
+            self.setSoldiers(soldiers)
+        else:
+            self.__setSoldiers(H, W)
+        if initTarget:
+            self.__setTarget(H, W)
         count = self.soldierCount(0) + self.soldierCount(1)
+        print count
         # list for storing current position of soldiers
         self.__soldiers = battlesim.SoldierPositionVector(count)
         # list for storing position of killed soldiers

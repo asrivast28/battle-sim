@@ -247,10 +247,6 @@ public:
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
 
-        std::cout << m_neighbors[0] << std::endl;
-        std::cout << m_total_soldiers[0] << std::endl;
-        printGrid();
-
         // claim-a-cell loop
         for (size_t x = 0; x < m_nrows; ++x) {
             for (size_t y = 0; y < m_ncols; ++y) {
@@ -638,7 +634,6 @@ private:
         // aggression of the soldier
         float a = soldier.aggression();
         // happiness of the soldier is defined as the relative count of soldiers of the same army
-        std::cout << "neigh: " << (int)m_neighbors[0](x,y) << " " << (int) m_neighbors[1](x,y) << std::endl;
         float h = m_neighbors[soldier.army()](x, y);
         h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
 
@@ -654,7 +649,6 @@ private:
                             // TODO: refine the following expression to give preference to the current dir
                             float mat_ij = m_follow_prev * mat_m[i * 3 + j] + (1 - m_follow_prev) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
                             // TODO: refine the following expression?
-                            std::cout << "mat_ij " << mat_ij <<  std::endl;
                             assert (mat_ij >= 0);
                             trans_prob[i * 3 + j] = mat_ij * (m_dynamic[soldier.army()](x + i - 1, y + j - 1) / 255.0) * (m_static(x + i - 1, y + j - 1) / 255.0);
 

@@ -1,7 +1,7 @@
 from pygame import *
 
-#from battlesimwrap import *
-import battlesim
+from battlesimwrap import *
+#import battlesim
 
 import numpy
 import ConfigParser
@@ -13,10 +13,10 @@ aggression = 100
 
 def battlefield_from_arr(image3d):
     access = numpy.full((W, H), fill_value=255, dtype=numpy.uint8)
-    field = battlesim.BattleField(access)
+    #field = battlesim.BattleField(access)
     # set soldiers
     soldiers = [] # battlesim.SoldierVector()
-    print (W,H)
+    #print (W,H)
     for x in range(0, W):
         for y in range(0, H):
             if image3d[x,y,0] == 255 and image3d[x,y,1] == 255 and image3d[x,y,2] == 255:
@@ -28,7 +28,8 @@ def battlefield_from_arr(image3d):
             elif image3d[x,y,2] == 255:
                 # blue army
                 soldiers.append((x * W + y, battlesim.Soldier(1, battlesim.Soldier.ARCHER, skill, aggression)))
-    field.setSoldiers(soldiers)
+    #field.setSoldiers(soldiers)
+    field = BattleField(access, soldiers)
     # set target (annihilation)
     # TODO: support adding user targets
     field.setFlag(0, H, W / 2)
@@ -37,19 +38,20 @@ def battlefield_from_arr(image3d):
     return field
 
 # read config
+config = ConfigParser.ConfigParser()
 # soldier configuration
 config.read('soldier.config')
-#Soldier.configure(config)
+Soldier.configure(config)
 
 # battlefield configuration
 config.read('battlefield.config')
-#BattleField.configure(config)
+BattleField.configure(config)
 
 # init screen
 init()
 display.init()
-W = 40
-H = 40
+W = 400
+H = 400
 screen = display.set_mode((W, H))
 
 display.update(screen.fill(Color('white'), Rect((0, 0, W, H))))
@@ -74,25 +76,21 @@ while not q:
             #print arr
             i = 0
             pass
-        soldier_count = bf.soldierCount(0) + bf.soldierCount(1)
-        moved_soldiers = battlesim.SoldierPositionVector(soldier_count)
+        arr = surfarray.pixels3d(screen)
         if i % 2 == 0:
-            bf.move(moved_soldiers)
-            soldier_count = bf.soldierCount(0) + bf.soldierCount(1)
             screen.fill(Color('white'), Rect(0, 0, W, H))
-            arr = surfarray.pixels3d(screen)
-            it = iter(moved_soldiers)
-            for s in xrange(soldier_count):
-                pos, info = it.next()
-                army = (info & (1 << 7)) >> 7
-                kind = info ^ (army << 7)
+            for p, army, kind in bf.move():
                 # draw!
+                pos = (p % W, p / W)
+                #print arr[pos[0], pos[1]]
                 if army == 0:
                     arr[pos[0], pos[1]] = numpy.array([0, 255, 0])
                 else:
                     arr[pos[0], pos[1]] = numpy.array([0, 0, 255])
         else:
-            bf.kill()
+            for p in bf.kill():
+                pos = (p % W, p / W)
+                arr[pos[0], pos[1]] = numpy.array([255,0,0])
         i = i + 1
 
         display.update()

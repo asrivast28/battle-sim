@@ -97,7 +97,7 @@ class FrameBuilder(object):
         self.__fill = fill
 
         # setup battle
-        self.__bf = BattleField(accessibility)
+        self.__bf = BattleField(accessibility, True, True)
         # iteration counter
         self.__iter = 0
 
