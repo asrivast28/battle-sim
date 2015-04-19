@@ -1,0 +1,4 @@
+*.pyc
+*.mp4
+battlesim.py
+battlesim_wrap.cpp
