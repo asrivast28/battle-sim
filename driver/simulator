@@ -103,17 +103,6 @@ class BattleField(battlesim.BattleField):
         for param in ('ExtendedNeighborhoodSize', 'DynamicFieldDecayFactor'):
             getattr(cls, 'set%s'%(param))(int(config.get('Common', param)))
 
-    @staticmethod
-    def createField(H, W):
-        """
-        Create an accessibility matrix for the field.
-        """
-        accessibility = numpy.full((H, W), 255, dtype = numpy.uint8)
-        #for x in xrange(90, 110):
-            #for y in xrange(90, 110):
-                #accessibility[x][y] = 0
-        return accessibility
-
     def __setSoldiers(self, H, W):
         soldiers = []
         # army 0
@@ -191,13 +180,17 @@ class FrameBuilder(object):
         obstructions.draw(field)
         return field.get_npimage()
 
-    def __init__(self, fill):
-        self.__dims = (40, 80)
+    def __init__(self, image, fill):
+        import itertools, png
+        r = png.Reader(filename = image)
+        W, H, pngdata, meta = r.asDirect()
+        assert meta['greyscale']
+        accessibility = numpy.vstack(itertools.imap(numpy.uint8, pngdata))
+        self.__dims = (H, W)
         # fill specifications
         self.__fill = fill
 
         # setup battle
-        accessibility = BattleField.createField(*self.__dims)
         self.__bf = BattleField(accessibility)
         # iteration counter
         self.__iter = 0
@@ -273,7 +266,7 @@ if __name__ == '__main__':
     fill = IconFill() if args.render == 'icon' else PixelFill()
 
     time = ((args.iter * 2) / args.fps) + (1 if (args.iter * 2) % args.fps else 0)
-    clip = mpy.VideoClip(FrameBuilder(fill), duration = time)
+    clip = mpy.VideoClip(FrameBuilder('field.png', fill), duration = time)
 
     name = 'battle.%s'%(args.ext)
     if args.ext == 'gif':
