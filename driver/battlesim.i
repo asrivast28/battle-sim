@@ -49,7 +49,7 @@ public:
 %template() std::pair<size_t, Soldier>;
 %template(KilledPositionVector) std::vector<size_t>;
 %template(SoldierPositionVector) std::vector<std::pair<size_t, unsigned char> >;
-%template() std::vector<std::pair<size_t, Soldier> >;
+%template(SoldierVector) std::vector<std::pair<size_t, Soldier> >;
 
 %nodefaultctor BattleField;
 class BattleField {

@@ -189,6 +189,7 @@ public:
         for (std::vector<std::pair<size_t, Soldier> >::const_iterator s = soldiers.begin(); s != soldiers.end(); ++s) {
             m_soldiers.at(s->first / m_ncols, s->first % m_ncols) = s->second;
         }
+        std::cout << "init neigh counts" << std::endl;
         initializeNeighborCounts();
     }
 
@@ -231,6 +232,10 @@ public:
         float mat_m[3 * 3] = {};
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
+
+        std::cout << m_neighbors[0] << std::endl;
+        std::cout << m_total_soldiers[0] << std::endl;
+        printGrid();
 
         // claim-a-cell loop
         for (size_t x = 0; x < m_nrows; ++x) {
@@ -619,6 +624,7 @@ private:
         // aggression of the soldier
         float a = soldier.aggression();
         // happiness of the soldier is defined as the relative count of soldiers of the same army
+        std::cout << "neigh: " << (int)m_neighbors[0](x,y) << " " << (int) m_neighbors[1](x,y) << std::endl;
         float h = m_neighbors[soldier.army()](x, y);
         h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
         float p=0.25;
@@ -633,9 +639,12 @@ private:
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
                             // TODO: refine the following expression to give preference to the current dir
+                          std::cout << a << " " << h << std::endl;
+                          std::cout << mat_m[i * 3 + j] << " " << mat_g[i * 3 + j] << " "  << mat_l[i * 3 + j] << std::endl;
                             float mat_ij = p * mat_m[i * 3 + j] + (1 - p) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
                             // calculate transitional probability
                             // TODO: refine the following expression?
+                            std::cout << "mat_ij " << mat_ij <<  std::endl;
                             assert (mat_ij >= 0);
                             trans_prob[i * 3 + j] = mat_ij * (m_dynamic[soldier.army()](x + i - 1, y + j - 1) / 255.0) * (m_static(x + i - 1, y + j - 1) / 255.0);
 
