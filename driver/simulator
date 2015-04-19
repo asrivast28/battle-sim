@@ -76,7 +76,7 @@ class FrameBuilder(object):
         while not it.finished:
             if it[0] != 255:
                 color = list(it[0] / 255.0 for x in xrange(3))
-                obstructions.append(gz.square(self.__fill.size, xy = (it.multi_index[1], it.multi_index[0]), fill = color))
+                obstructions.append(gz.square(self.__fill.size, xy = [it.multi_index[i] * self.__fill.scale for i in (1, 0)], fill = color))
             it.iternext()
         obstructions = gz.Group(obstructions)
         field = gz.Surface(self.__dims[1] * self.__fill.scale, self.__dims[0] * self.__fill.scale, bg_color = (1, 1, 1))
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     fill = IconFill() if args.render == 'icon' else PixelFill()
 
     time = ((args.iter * 2) / args.fps) + (1 if (args.iter * 2) % args.fps else 0)
-    clip = mpy.VideoClip(FrameBuilder('field.png', fill), duration = time)
+    clip = mpy.VideoClip(FrameBuilder(fill, image = 'field.png'), duration = time)
 
     name = 'battle.%s'%(args.ext)
     if args.ext == 'gif':
