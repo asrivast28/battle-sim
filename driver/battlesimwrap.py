@@ -45,6 +45,8 @@ class BattleField(battlesim.BattleField):
     def configure(cls, config):
         for param in ('ExtendedNeighborhoodSize', 'DynamicFieldDecayFactor'):
             getattr(cls, 'set%s'%(param))(int(config.get('Common', param)))
+        for param in ('FollowPreviousProbability', ):
+            getattr(cls, 'set%s'%(param))(float(config.get('Common', param)))
 
     def __setSoldiers(self, H, W):
         soldiers = []

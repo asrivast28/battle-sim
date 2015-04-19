@@ -168,6 +168,7 @@ if __name__ == '__main__':
     config.read('armies.config')
 
     seed(args.seed)
+    battlesim.seed(args.seed)
 
     fill = IconFill() if args.render == 'icon' else PixelFill()
 

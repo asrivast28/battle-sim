@@ -652,7 +652,14 @@ private:
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
                             // TODO: refine the following expression to give preference to the current dir
+<<<<<<< HEAD
+                          std::cout << a << " " << h << std::endl;
+                          std::cout << mat_m[i * 3 + j] << " " << mat_g[i * 3 + j] << " "  << mat_l[i * 3 + j] << std::endl;
+                            float mat_ij = p * mat_m[i * 3 + j] + (1 - p) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
+=======
                             float mat_ij = m_follow_prev * mat_m[i * 3 + j] + (1 - m_follow_prev) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
+>>>>>>> 0ea77ced617a3c46da6e16f43ce5f8d1410771a1
+                            // calculate transitional probability
                             // TODO: refine the following expression?
                             std::cout << "mat_ij " << mat_ij <<  std::endl;
                             assert (mat_ij >= 0);
