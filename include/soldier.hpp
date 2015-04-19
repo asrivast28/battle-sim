@@ -28,6 +28,21 @@ public:
     typedef unsigned char AggressionType;
 
 public:
+    static
+    void
+    setKillRadiusMap(const std::map<Type, unsigned char>& killRadiusMap)
+    {
+        m_killRadiusMap = killRadiusMap;
+    }
+
+    static
+    void
+    setDynamicFieldMap(const std::map<Type, unsigned char>& dynamicFieldMap)
+    {
+        m_dynamicFieldMap = dynamicFieldMap;
+    }
+
+public:
     /// default constructor
     Soldier()
       : m_army(), m_type(EMPTY),
@@ -125,27 +140,27 @@ public:
     { }
 
 private:
-    /// creates soldier type to kill radius map
+    /// initializes soldier type to kill radius map
     static
     std::map<Type, unsigned char>
-    createKillRadiusMap()
+    initializeKillRadiusMap()
     {
         std::map<Type, unsigned char> killRadiusMap;
-        killRadiusMap[LEADER] = 1;
-        killRadiusMap[SWORDSMAN] = 1;
-        killRadiusMap[ARCHER] = 5;
+        killRadiusMap[LEADER] = 0;
+        killRadiusMap[SWORDSMAN] = 0;
+        killRadiusMap[ARCHER] = 0;
         return killRadiusMap;
     }
 
-    /// creates soldier type to dynamic field map
+    /// initializes soldier type to dynamic field map
     static
     std::map<Type, unsigned char>
-    createDynamicFieldMap()
+    initializeDynamicFieldMap()
     {
         std::map<Type, unsigned char> dynamicFieldMap;
-        dynamicFieldMap[LEADER] = 50;
-        dynamicFieldMap[SWORDSMAN] = 10;
-        dynamicFieldMap[ARCHER] = 10;
+        dynamicFieldMap[LEADER] = 0;
+        dynamicFieldMap[SWORDSMAN] = 0;
+        dynamicFieldMap[ARCHER] = 0;
         return dynamicFieldMap;
     }
 
@@ -167,10 +182,10 @@ private:
 
 }; // class Soldier
 
-// initialize kill radii map
-std::map<Soldier::Type, unsigned char> Soldier::m_killRadiusMap = Soldier::createKillRadiusMap();
+// initialize kill radius map
+std::map<Soldier::Type, unsigned char> Soldier::m_killRadiusMap = Soldier::initializeKillRadiusMap();
 // initialize dynamic field map
-std::map<Soldier::Type, unsigned char> Soldier::m_dynamicFieldMap = Soldier::createDynamicFieldMap();
+std::map<Soldier::Type, unsigned char> Soldier::m_dynamicFieldMap = Soldier::initializeDynamicFieldMap();
 
 std::ostream& operator<< (std::ostream& stream, const Soldier& t)
 {

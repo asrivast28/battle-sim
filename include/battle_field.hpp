@@ -81,9 +81,9 @@ pickIndex(float* const prob_dist, const size_t max_index)
 class BattleField {
 private:
   // extended neighborhood size
-  static const unsigned char m_k = 5;
+  static unsigned char m_k;
   // dynamic field decay constant
-  static const unsigned char m_beta = 1;
+  static unsigned char m_beta;
 
 public:
     enum Target {
@@ -96,6 +96,21 @@ public:
         WON,
         TIED
     };
+
+public:
+    static
+    void
+    setExtendedNeighborhoodSize(const unsigned char k)
+    {
+        m_k = k;
+    }
+
+    static
+    void
+    setDynamicFieldDecayFactor(const unsigned char beta)
+    {
+        m_beta = beta;
+    }
 
 public:
     BattleField(const size_t nrows, const size_t ncols)
@@ -711,5 +726,10 @@ private:
     matrix<unsigned char> m_lastmove;
 
 }; // class BattleField
+
+
+unsigned char BattleField::m_k = 0;
+unsigned char BattleField::m_beta = 0;
+
 
 #endif // BATTLE_FIELD_H

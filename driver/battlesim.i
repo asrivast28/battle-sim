@@ -5,6 +5,7 @@
 #include "battle_field.hpp"
 %}
 
+%include <std_map.i>
 %include <std_pair.i>
 %include <std_vector.i>
 
@@ -32,10 +33,17 @@ public:
     typedef unsigned char AggressionType;
 
 public:
+    static void setKillRadiusMap(const std::map<Soldier::Type, unsigned char>&);
+    static void setDynamicFieldMap(const std::map<Soldier::Type, unsigned char>&);
+
+public:
     Soldier();
     Soldier(const unsigned char, const Type, const SkillType, const AggressionType);
     Soldier(const Soldier&);
 };
+
+%template() std::pair<Soldier::Type, unsigned char>;
+%template(SoldierTypeMap) std::map<Soldier::Type, unsigned char>;
 
 %template() std::pair<size_t, unsigned char>;
 %template() std::pair<size_t, Soldier>;
@@ -56,6 +64,10 @@ public:
         WON,
         TIED
     };
+
+public:
+    static void setExtendedNeighborhoodSize(const unsigned char);
+    static void setDynamicFieldDecayFactor(const unsigned char);
 
 public:
     BattleField(const size_t, const size_t);
