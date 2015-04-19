@@ -25,6 +25,11 @@
 #define DEBUG_MSG(format, ...) fprintf(stderr, format, __VA_ARGS__)
 #endif
 
+void
+seed(int seed) {
+    srand(seed);
+}
+
 /// returns a uniform random number in the range [0.0, 1.0]
 /// TODO: replace with a random number generator which is actually uniform
 float
@@ -84,6 +89,8 @@ private:
   static unsigned char m_k;
   // dynamic field decay constant
   static unsigned char m_beta;
+  // probability of following previous movement direction
+  static float m_follow_prev;
 
 public:
     enum Target {
@@ -110,6 +117,13 @@ public:
     setDynamicFieldDecayFactor(const unsigned char beta)
     {
         m_beta = beta;
+    }
+
+    static
+    void
+    setFollowPreviousProbability(const float follow_prev)
+    {
+        m_follow_prev = follow_prev;
     }
 
 public:
@@ -621,7 +635,6 @@ private:
         // happiness of the soldier is defined as the relative count of soldiers of the same army
         float h = m_neighbors[soldier.army()](x, y);
         h /= (m_neighbors[soldier.army()](x, y) + m_neighbors[soldier.enemy()](x, y));
-        float p=0.25;
 
         float sum_prob = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
@@ -633,7 +646,7 @@ private:
                         if (m_soldiers(x + i - 1, y + j - 1).empty()) {
                             // calculate actual matrix of preference for this index
                             // TODO: refine the following expression to give preference to the current dir
-                            float mat_ij = p * mat_m[i * 3 + j] + (1 - p) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
+                            float mat_ij = m_follow_prev * mat_m[i * 3 + j] + (1 - m_follow_prev) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
                             // calculate transitional probability
                             // TODO: refine the following expression?
                             assert (mat_ij >= 0);
@@ -706,9 +719,6 @@ private:
     // total number of alive soldiers
     size_t m_total_soldiers[2];
 
-    // preference given to the last move of the soldier
-    // float p;
-
     // grid for movement of the soldiers
     matrix<Soldier> m_soldiers;
     // matrix for storing static floor field
@@ -730,6 +740,7 @@ private:
 
 unsigned char BattleField::m_k = 0;
 unsigned char BattleField::m_beta = 0;
+float BattleField::m_follow_prev = 0.0;
 
 
 #endif // BATTLE_FIELD_H

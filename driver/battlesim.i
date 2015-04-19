@@ -20,6 +20,8 @@ import_array();
 %numpy_typemaps(bool, NPY_BOOL, size_t)
 %apply (size_t DIM1, size_t DIM2, bool* INPLACE_ARRAY2) {(size_t, size_t, bool*)}
 
+void seed(int);
+
 class Soldier {
 public:
     enum Type {
@@ -68,6 +70,7 @@ public:
 public:
     static void setExtendedNeighborhoodSize(const unsigned char);
     static void setDynamicFieldDecayFactor(const unsigned char);
+    static void setFollowPreviousProbability(const float);
 
 public:
     BattleField(const size_t, const size_t);
