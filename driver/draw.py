@@ -5,10 +5,10 @@ from battlesimwrap import *
 
 import numpy
 import ConfigParser
-
+import time
 
 blue_skill = 255
-green_skill = 0
+green_skill = 150
 #blue_aggression = 255
 
 
@@ -58,11 +58,16 @@ init()
 display.init()
 W = 400
 H = 400
-screen = display.set_mode((W, H))
+screen = display.set_mode((2*W, 2*H), RESIZABLE)
 
-display.update(screen.fill(Color('white'), Rect((0, 0, W, H))))
 
 draw_color = 'black'
+draw_type = 'field'
+
+green_target = (H/2, W/2)
+blue_target = (H/2, W/2)
+
+
 # draw buttons
 
 q = False
@@ -71,21 +76,66 @@ play = False
 edit = True
 firstit = True
 i = 0
+# initialize font; must be called after 'pygame.init()' to avoid 'Font not Initialized' error
+myfont = font.SysFont("monospace", 15)
+
+# render text
+label = myfont.render("BattleSim 0.1", 1, (255, 0, 0))
+#label_ttl = 10
+label_active = False
+label_starttime = time.time()
+pfollow = 1.0
+
+def draw_target(screen, pos, col):
+    size = 4
+    maxx = screen.get_size()[0]
+    maxy = screen.get_size()[1]
+    draw.line(screen, Color(col), [max(0,pos[0]-size), max(0,pos[1]-size)], [min(maxx,pos[0]+size),min(maxy,pos[1]+size)], 2)
+    draw.line(screen, Color(col), [max(0,pos[0]-size), min(maxy,pos[1]+size)], [min(maxx,pos[0]+size),max(0,pos[1]-size)], 2)
+
+
+def msg(text):
+    global label
+    global label_active
+    global label_starttime
+    label = myfont.render(text, 1, (255, 0, 0))
+    label_starttime = time.time()
+    label_active = True
+    #label_ttl = 10
+
+
+def pos_transform(pos):
+    target = (W, H)
+    relto = screen.get_size()
+    result = [0, 0]
+    for i in [0, 1]:
+        result[i] = pos[i]*target[i] / relto[i]
+    return (result[0], result[1])
+
+
+
+#screen.blit(label, (100, 100))
+backbuf = Surface((W,H))
+fieldbuf = Surface((W,H))
+fieldbuf.fill(Color('white'), Rect((0, 0, W, H)))
+#display.update()
 while not q:
 
     if play:
-        arr = surfarray.array3d(screen)
+        arr = surfarray.array3d(fieldbuf)
         if firstit:
             firstit = False
             i = 0
-            (bf,access) = battlefield_from_arr(arr)
-            access_arr = numpy.zeros((W, H, 3),dtype=numpy.uint8)
+            (bf, access) = battlefield_from_arr(arr)
+            access_arr = numpy.zeros((W, H, 3), dtype=numpy.uint8)
             for x in range(0, W):
                 for y in range(0, H):
                     access_arr[x,y] = numpy.array([access[x,y],access[x,y],access[x,y]])
             #print arr
             pass
-        arr = surfarray.pixels3d(screen)
+        arr = surfarray.pixels3d(fieldbuf)
+        bf.setFlag(0, green_target[1], green_target[0])
+        bf.setFlag(1, blue_target[1], blue_target[0])
 
         if i % 2 == 0:
             numpy.copyto(arr, access_arr)
@@ -101,48 +151,79 @@ while not q:
         else:
             for p in bf.kill():
                 pos = (p % W, p / W)
-                arr[pos[0], pos[1]] = numpy.array([255,0,0])
+                arr[pos[0], pos[1]] = numpy.array([255, 0, 0])
         i = i + 1
 
-        display.update()
+        del arr
 
-        for e in event.get():
-            if e.type == KEYUP:
-                print e.key
-                if e.key == K_SPACE:
-                    edit = True
-                    firstit = True
-                    play = False
-            if e.type in (MOUSEBUTTONDOWN, MOUSEMOTION):
-                if mouse.get_pressed() == (1, 0, 0):
-                    screen.fill(Color(draw_color), Rect(mouse.get_pos(), (20, 20)))
-                    display.update()
-            if e.type == QUIT:
-                q = True
-
-            # get matrix and make into battlefield
-        # create new frame
-
-    if edit:
-        for e in event.get():
-            if e.type == KEYUP:
-                print e.key
-                if e.key == K_r:
-                    draw_color = 'red'
-                elif e.key == K_g:
-                    draw_color = 'green'
-                elif e.key == K_b:
-                    draw_color = 'blue'
-                elif e.key == K_s:
-                    draw_color = 'black'
-                elif e.key == K_SPACE:
+    # process key events
+    for e in event.get():
+        if e.type == KEYUP:
+            print e.key
+            if e.key == K_g and edit:
+                msg("Draw Green army")
+                draw_color = 'green'
+                draw_type = 'field'
+            elif e.key == K_b and edit:
+                msg("Draw Blue army")
+                draw_color = 'blue'
+                draw_type = 'field'
+            elif e.key == K_s and edit:
+                msg("Draw static field")
+                draw_color = 'black'
+                draw_type = 'field'
+            elif e.key == K_h:
+                msg("Set Green Target")
+                draw_type = 'target'
+                draw_color = 'green'
+            elif e.key == K_n:
+                msg("Set Blue Target")
+                draw_type = 'target'
+                draw_color = 'blue'
+            elif e.key == K_p and play:
+                if pfollow >= 1.0:
+                    pfollow = 0.0
+                else:
+                    pfollow += 0.2
+                msg("Set Follow = %f.1"%pfollow)
+                bf.setFollowPreviousProbability(pfollow)
+            elif e.key == K_SPACE:
+                if edit:
+                    msg("Play (press SPACE to pause)")
                     edit = False
                     firstit = True
                     play = True
-            if e.type in (MOUSEBUTTONDOWN, MOUSEMOTION):
-                if mouse.get_pressed() == (1, 0, 0):
-                    screen.fill(Color(draw_color), Rect(mouse.get_pos(), (20, 20)))
-                    display.update()
-            if e.type == QUIT:
-                q=True
+                else:
+                    edit = True
+                    firstit = True
+                    play = False
+                    msg("Edit Mode (press SPACE to start)")
+        if e.type in (MOUSEBUTTONDOWN, MOUSEMOTION):
+            if mouse.get_pressed() == (1, 0, 0):
+                if draw_type == 'field' and edit:
+                    fieldbuf.fill(Color(draw_color), Rect(pos_transform(mouse.get_pos()), (20, 20)))
+                if draw_type == 'target':
+                    # set target!
+                    if draw_color == 'blue':
+                        blue_target = pos_transform(mouse.get_pos())
+                    if draw_color == 'green':
+                        green_target = pos_transform(mouse.get_pos())
+        elif e.type == VIDEORESIZE:
+            screen = display.set_mode(e.dict['size'],RESIZABLE)
+        if e.type == QUIT:
+            q = True
+    # draw
+    backbuf.blit(fieldbuf, (0,0))
+    draw_target(backbuf, green_target, 'lightgreen')
+    draw_target(backbuf, blue_target, 'lightblue')
+    transform.smoothscale(backbuf, screen.get_size(), screen)
+    #screen.blit(backbuf, (0, 0))
+    # draw targets!
+    # draw msg?
+    if label_active:
+        if time.time() - label_starttime > 5:
+            label_active = False
+        else:
+            screen.blit(label, (0, 0))
+    display.update()
 quit()

@@ -71,6 +71,11 @@ pickIndex(float* const prob_dist, const size_t max_index)
         //throw std::runtime_error("Probability distribution doesn't add up to 1.0!");
     //}
 
+    if (prob_dist[max_index-1] != 1.0) {
+        //std::cerr << "[WARNING] sum of probs was: " << prob_dist[max_index-1] << std::endl;
+        prob_dist[max_index-1] = 1.0;
+    }
+
     float prob = uniformRandom();
     float prev_val = 0.0;
     for (size_t i = 0; i < max_index; ++i) {
@@ -505,6 +510,17 @@ private:
         }
     }
 
+    void normalize_matrix(float* mat, size_t len = 9) const
+    {
+        double sum = 0.0;
+        for (size_t i = 0; i < len; ++i) {
+          sum += mat[i];
+        }
+        for (size_t i = 0; i < len; ++i) {
+          mat[i] /= sum;
+        }
+    }
+
     /// computes global preference matrix for a soldier, based on global target coordinates
     void
     calculateGlobalPreference(const size_t x, const size_t y, float* const mat_g) const
@@ -521,7 +537,6 @@ private:
         unsigned char army = m_soldiers(x, y).army();
 
         // give higher global preference to the cell which takes the soldier closer to the target
-        float sum_distance = 0.0;
         float max_distance = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
               size_t diff_x = m_flag_x[army] > (x + i) ? (m_flag_x[army] - (x + i - 1)) : ((x + i - 1) - m_flag_x[army]);
@@ -529,21 +544,22 @@ private:
                   size_t diff_y = m_flag_y[army] > (y + j) ? (m_flag_y[army] - (y + j - 1)) : ((y + j - 1) - m_flag_y[army]);
                   float distance = sqrt(pow(diff_x, 2.0) + pow(diff_y, 2.0));
                   mat_g[i * 3 + j] = distance;
-                  sum_distance += distance;
                   if (max_distance < distance) {
                       max_distance = distance;
                   }
               }
         }
 
-        // subtract the minimum distance from all the distances and then normalize
-        sum_distance = (3 * 3 * max_distance) - sum_distance;
-        if (std::fabs(sum_distance - 0.0) > FLOAT_EPSILON) {
-            for (unsigned char i = 0; i < 3 * 3; ++i) {
-                mat_g[i] = max_distance - mat_g[i];
-                mat_g[i] /= sum_distance;
-            }
+        // subtract all the distances from the max and then normalize
+        for (unsigned char i = 0; i < 3 * 3; ++i) {
+            mat_g[i] = max_distance - mat_g[i];
         }
+        normalize_matrix(mat_g, 9);
+        for (unsigned char i = 0; i < 3 * 3; ++i) {
+            mat_g[i] *= mat_g[i];
+            mat_g[i] *= mat_g[i];
+        }
+        normalize_matrix(mat_g, 9);
     }
 
     // support function for calculating global matrix of preference, in case we want to destroy opponent's army
