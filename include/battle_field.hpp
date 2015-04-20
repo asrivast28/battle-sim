@@ -146,8 +146,8 @@ public:
         m_dynamic[1] = matrix<unsigned char>(nrows, ncols, 1);
 
         // initialize the extended neighborhood counts
-        m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
-        m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
+        m_neighbors[0] = matrix<unsigned short>(nrows, ncols);
+        m_neighbors[1] = matrix<unsigned short>(nrows, ncols);
 
         m_total_soldiers[0] = 0;
         m_total_soldiers[1] = 0;
@@ -171,8 +171,8 @@ public:
         m_dynamic[1] = matrix<unsigned char>(nrows, ncols, 1);
 
         // initialize the extended neighborhood counts
-        m_neighbors[0] = matrix<unsigned char>(nrows, ncols);
-        m_neighbors[1] = matrix<unsigned char>(nrows, ncols);
+        m_neighbors[0] = matrix<unsigned short>(nrows, ncols);
+        m_neighbors[1] = matrix<unsigned short>(nrows, ncols);
 
         m_total_soldiers[0] = 0;
         m_total_soldiers[1] = 0;
@@ -726,7 +726,7 @@ private:
     matrix<unsigned char> m_dynamic[2];
 
     // matrix for storing extended neighborhood counts, for both the armies
-    matrix<unsigned char> m_neighbors[2];
+    matrix<unsigned short> m_neighbors[2];
     // matrix for storing soldiers which want to move to each cell
     matrix<unsigned char> m_claimed;
     // matrix for storing probabilities (kill and movement)
