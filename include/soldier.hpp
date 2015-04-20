@@ -118,7 +118,7 @@ public:
     {
         SkillType max_skill = 0;
         max_skill = ~max_skill;
-        return static_cast<float>(m_aggression) / max_skill;
+        return static_cast<float>(m_skill) / max_skill;
     }
 
     /// returns kill radius of this soldier
