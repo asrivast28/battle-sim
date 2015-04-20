@@ -81,7 +81,6 @@ class BattleField(battlesim.BattleField):
         if initTarget:
             self.__setTarget(H, W)
         count = self.soldierCount(0) + self.soldierCount(1)
-        print count
         # list for storing current position of soldiers
         self.__soldiers = battlesim.SoldierPositionVector(count)
         # list for storing position of killed soldiers

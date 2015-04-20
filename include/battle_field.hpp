@@ -203,7 +203,6 @@ public:
         for (std::vector<std::pair<size_t, Soldier> >::const_iterator s = soldiers.begin(); s != soldiers.end(); ++s) {
             m_soldiers.at(s->first / m_ncols, s->first % m_ncols) = s->second;
         }
-        std::cout << "init neigh counts" << std::endl;
         initializeNeighborCounts();
     }
 
