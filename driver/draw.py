@@ -13,6 +13,7 @@ aggression = 100
 
 def battlefield_from_arr(image3d):
     access = numpy.full((W, H), fill_value=255, dtype=numpy.uint8)
+    access_rot = numpy.copy(access)
     #field = battlesim.BattleField(access)
     # set soldiers
     soldiers = [] # battlesim.SoldierVector()
@@ -24,18 +25,21 @@ def battlefield_from_arr(image3d):
                 pass
             elif image3d[x,y,1] == 255:
                 # green army!
-                soldiers.append((x * W + y, battlesim.Soldier(0, battlesim.Soldier.ARCHER, skill, aggression)))
+                soldiers.append((y * W + x, battlesim.Soldier(0, battlesim.Soldier.ARCHER, skill, aggression)))
             elif image3d[x,y,2] == 255:
                 # blue army
-                soldiers.append((x * W + y, battlesim.Soldier(1, battlesim.Soldier.ARCHER, skill, aggression)))
+                soldiers.append((y * W + x, battlesim.Soldier(1, battlesim.Soldier.ARCHER, skill, aggression)))
+            else:
+                access[y,x] = 0
+                access_rot[x,y] = 0
     #field.setSoldiers(soldiers)
     field = BattleField(access, soldiers)
     # set target (annihilation)
     # TODO: support adding user targets
-    field.setFlag(0, H, W / 2)
-    field.setFlag(1, 0, W / 2)
+    field.setFlag(0, H-1, W-1)
+    field.setFlag(1, H-1, W-1)
     field.setTarget(field.ANNIHILATE_ENEMY)
-    return field
+    return (field, access_rot)
 
 # read config
 config = ConfigParser.ConfigParser()
@@ -71,14 +75,19 @@ while not q:
         arr = surfarray.array3d(screen)
         if firstit:
             firstit = False
-            #arr = surfarray.array2d(screen)
-            bf = battlefield_from_arr(arr)
-            #print arr
             i = 0
+            (bf,access) = battlefield_from_arr(arr)
+            access_arr = numpy.zeros((W, H, 3),dtype=numpy.uint8)
+            for x in range(0, W):
+                for y in range(0, H):
+                    access_arr[x,y] = numpy.array([access[x,y],access[x,y],access[x,y]])
+            #print arr
             pass
         arr = surfarray.pixels3d(screen)
+
         if i % 2 == 0:
-            screen.fill(Color('white'), Rect(0, 0, W, H))
+            numpy.copyto(arr, access_arr)
+            #screen.fill(Color('white'), Rect(0, 0, W, H))
             for p, army, kind in bf.move():
                 # draw!
                 pos = (p % W, p / W)
