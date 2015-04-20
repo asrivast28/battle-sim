@@ -7,8 +7,10 @@ import numpy
 import ConfigParser
 
 
-skill = 100
-aggression = 100
+blue_skill = 255
+green_skill = 0
+#blue_aggression = 255
+
 
 
 def battlefield_from_arr(image3d):
@@ -25,10 +27,10 @@ def battlefield_from_arr(image3d):
                 pass
             elif image3d[x,y,1] == 255:
                 # green army!
-                soldiers.append((y * W + x, battlesim.Soldier(0, battlesim.Soldier.ARCHER, skill, aggression)))
+                soldiers.append((y * W + x, battlesim.Soldier(0, battlesim.Soldier.ARCHER, green_skill, 100)))
             elif image3d[x,y,2] == 255:
                 # blue army
-                soldiers.append((y * W + x, battlesim.Soldier(1, battlesim.Soldier.ARCHER, skill, aggression)))
+                soldiers.append((y * W + x, battlesim.Soldier(1, battlesim.Soldier.ARCHER, blue_skill, blue_skill)))
             else:
                 access[y,x] = 0
                 access_rot[x,y] = 0
