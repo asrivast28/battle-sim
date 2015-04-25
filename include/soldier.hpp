@@ -42,6 +42,10 @@ public:
         m_dynamicFieldMap = dynamicFieldMap;
     }
 
+    static int maxKillRadius() {
+        return std::max<int>(std::max<int>(m_killRadiusMap[LEADER],m_killRadiusMap[SWORDSMAN]),m_killRadiusMap[ARCHER]);
+    }
+
 public:
     /// default constructor
     Soldier()

@@ -12,6 +12,9 @@
 #include <vector>
 #include <iostream>
 
+// using signed index type (for border matrix)
+typedef int64_t index_t;
+
 // simple matrix type, data saved as row-major
 template <typename T>
 class matrix {
@@ -55,7 +58,7 @@ public:
     }
 
     /// element access operator
-    inline const T& operator()(std::size_t i, std::size_t j) const
+    inline const T& operator()(index_t i, index_t j) const
     {
         assert(0 <= i && i < m);
         assert(0 <= j && j < n);
@@ -63,7 +66,7 @@ public:
     }
 
     /// element access operator
-    inline T& operator()(std::size_t i, std::size_t j)
+    inline T& operator()(index_t i, index_t j)
     {
         assert(0 <= i && i < m);
         assert(0 <= j && j < n);
@@ -71,7 +74,7 @@ public:
     }
 
     /// element access operator with `at(i,j)` (otherwise identical)
-    inline const T& at(std::size_t i, std::size_t j) const
+    inline const T& at(index_t i, index_t j) const
     {
         assert(0 <= i && i < m);
         assert(0 <= j && j < n);
@@ -79,7 +82,7 @@ public:
     }
 
     /// element access operator with `at(i,j)` (otherwise identical)
-    inline T& at(std::size_t i, std::size_t j)
+    inline T& at(index_t i, index_t j)
     {
         assert(0 <= i && i < m);
         assert(0 <= j && j < n);
@@ -97,15 +100,21 @@ public:
     }
 
     /// Returns the number of columns
-    inline std::size_t ncols() const {
+    inline std::size_t  ncols() const {
         return n;
     }
 
+    /// set everything to zero or default constructed
+    inline void zero() {
+        for (index_t i = 0; i < m; ++i)
+            for (index_t j = 0; j < n; ++j)
+                at(i,j) = T();
+    }
 protected:
     /// number of rows
-    std::size_t m;
+    index_t m;
     /// number of columns
-    std::size_t n;
+    index_t n;
     /// data of the matrix
     std::vector<T> m_data;
 };
@@ -130,6 +139,9 @@ public:
     border_matrix(std::size_t nrows, std::size_t ncols, std::size_t border_size)
         : matrix_type(nrows+2*border_size, ncols+2*border_size), border_size(border_size) {}
 
+    border_matrix(std::size_t nrows, std::size_t ncols, std::size_t border_size, const T& init)
+        : matrix_type(nrows+2*border_size, ncols+2*border_size, init), border_size(border_size) {}
+
     /// initialization with data from iterators
     template <typename InputIterator>
     border_matrix(std::size_t nrows, std::size_t ncols, std::size_t border_size, InputIterator begin, InputIterator end)
@@ -139,7 +151,7 @@ public:
         if (size == nrows*ncols)
         {
             // only data for internal matrix given -> have to copy row by row
-            for (std::size_t i = 0; i < nrows; ++i)
+            for (index_t i = 0; i < this->m; ++i)
             {
                 std::copy(begin+i*ncols, begin + (i+1)*ncols,
                           &this->m_data[i*(this->n) + border_size]);
@@ -157,7 +169,7 @@ public:
     }
 
     /// initialization with data
-    border_matrix(std::size_t nrows, std::size_t ncols, std::size_t border_size, const std::vector<T>& data)
+    border_matrix(index_t nrows, index_t ncols, index_t border_size, const std::vector<T>& data)
         : border_matrix(nrows, ncols, border_size, data.begin(), data.end()) {
     }
 
@@ -174,34 +186,34 @@ public:
     }
 
     /// element access operator
-    inline const T& operator()(std::size_t i, std::size_t j) const
+    inline const T& operator()(index_t i, index_t j) const
     {
-        assert(0 <= i && i < this->m-2*border_size);
-        assert(0 <= j && j < this->n-2*border_size);
+        assert(-border_size <= i && i < this->m-border_size);
+        assert(-border_size <= j && j < this->n-border_size);
         return this->m_data[(i+border_size)*this->n + j + border_size];
     }
 
     /// element access operator
-    inline T& operator()(std::size_t i, std::size_t j)
+    inline T& operator()(index_t i, index_t j)
     {
-        assert(0 <= i && i < this->m-2*border_size);
-        assert(0 <= j && j < this->n-2*border_size);
+        assert(-border_size <= i && i < this->m-border_size);
+        assert(-border_size <= j && j < this->n-border_size);
         return this->m_data[(i+border_size)*this->n + j + border_size];
     }
 
     /// element access operator with `at(i,j)` (otherwise identical)
-    inline const T& at(std::size_t i, std::size_t j) const
+    inline const T& at(index_t i, index_t j) const
     {
-        assert(0 <= i && i < this->m-2*border_size);
-        assert(0 <= j && j < this->n-2*border_size);
+        assert(-border_size <= i && i < this->m-border_size);
+        assert(-border_size <= j && j < this->n-border_size);
         return this->m_data[(i+border_size)*this->n + j + border_size];
     }
 
     /// element access operator with `at(i,j)` (otherwise identical)
-    inline T& at(std::size_t i, std::size_t j)
+    inline T& at(index_t i, index_t j)
     {
-        assert(0 <= i && i < this->m-2*border_size);
-        assert(0 <= j && j < this->n-2*border_size);
+        assert(-border_size <= i && i < this->m-border_size);
+        assert(-border_size <= j && j < this->n-border_size);
         return this->m_data[(i+border_size)*this->n + j + border_size];
     }
 
@@ -230,13 +242,35 @@ public:
         return border_size;
     }
 
+    /// set everything to zero or default constructed
+    inline void zero() {
+        this->zero();
+    }
+
 protected:
-    std::size_t border_size;
+    index_t border_size;
 };
 
 
 template<typename T>
 std::ostream& operator<< (std::ostream& stream, const matrix<T>& mat)
+{
+    for (std::size_t i = 0; i < mat.nrows(); ++i)
+    {
+        stream << "[";
+        for (std::size_t j = 0; j < mat.ncols(); ++j)
+        {
+            if (j != 0)
+                stream << " ";
+            stream << mat(i,j);
+        }
+        stream << "]" << std::endl;
+    }
+    return stream;
+}
+
+template<typename T>
+std::ostream& operator<< (std::ostream& stream, const border_matrix<T>& mat)
 {
     for (std::size_t i = 0; i < mat.nrows(); ++i)
     {

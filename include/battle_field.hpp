@@ -135,8 +135,10 @@ public:
     BattleField(const size_t nrows, const size_t ncols)
         : m_nrows(nrows), m_ncols(ncols), m_target(ANNIHILATE_ENEMY),
           m_status(ONGOING), m_winner(-1),
-          m_soldiers(nrows, ncols), m_static(nrows, ncols, 255),
-          m_claimed(nrows, ncols), m_probability(nrows, ncols),
+          m_soldiers(nrows, ncols,std::max<int>(m_k, Soldier::maxKillRadius())),
+          m_static(nrows, ncols, 1, 255),
+          m_claimed(nrows, ncols, 1),
+          m_probability(nrows, ncols, Soldier::maxKillRadius()),
           m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
@@ -147,12 +149,12 @@ public:
         m_flag_y[1] = 0;
 
         // initialize the dynamic field matrices
-        m_dynamic[0] = matrix<unsigned char>(nrows, ncols, 1);
-        m_dynamic[1] = matrix<unsigned char>(nrows, ncols, 1);
+        m_dynamic[0] = border_matrix<unsigned char>(nrows, ncols, 1, 1);
+        m_dynamic[1] = border_matrix<unsigned char>(nrows, ncols, 1, 1);
 
         // initialize the extended neighborhood counts
-        m_neighbors[0] = matrix<unsigned short>(nrows, ncols);
-        m_neighbors[1] = matrix<unsigned short>(nrows, ncols);
+        m_neighbors[0] = border_matrix<unsigned short>(nrows, ncols, m_k);
+        m_neighbors[1] = border_matrix<unsigned short>(nrows, ncols, m_k);
 
         m_total_soldiers[0] = 0;
         m_total_soldiers[1] = 0;
@@ -161,8 +163,11 @@ public:
     BattleField(size_t nrows, size_t ncols, unsigned char* accessibility)
         : m_nrows(nrows), m_ncols(ncols), m_target(ANNIHILATE_ENEMY),
           m_status(ONGOING), m_winner(-1),
-          m_soldiers(nrows, ncols), m_static(nrows, ncols, accessibility, accessibility + nrows * ncols),
-          m_claimed(nrows, ncols), m_probability(nrows, ncols), m_lastmove(nrows, ncols)
+          m_soldiers(nrows, ncols,std::max<int>(m_k, Soldier::maxKillRadius())),
+          m_static(nrows, ncols, 1, accessibility, accessibility + nrows * ncols),
+          m_claimed(nrows, ncols, 1),
+          m_probability(nrows, ncols, Soldier::maxKillRadius()),
+          m_lastmove(nrows, ncols)
     {
         // initialize the target coordinates
         m_flag_x[0] = 0;
@@ -172,25 +177,26 @@ public:
         m_flag_y[1] = 0;
 
         // initialize the dynamic field matrices
-        m_dynamic[0] = matrix<unsigned char>(nrows, ncols, 1);
-        m_dynamic[1] = matrix<unsigned char>(nrows, ncols, 1);
+        m_dynamic[0] = border_matrix<unsigned char>(nrows, ncols, 1, 1);
+        m_dynamic[1] = border_matrix<unsigned char>(nrows, ncols, 1, 1);
 
         // initialize the extended neighborhood counts
-        m_neighbors[0] = matrix<unsigned short>(nrows, ncols);
-        m_neighbors[1] = matrix<unsigned short>(nrows, ncols);
+        m_neighbors[0] = border_matrix<unsigned short>(nrows, ncols, m_k);
+        m_neighbors[1] = border_matrix<unsigned short>(nrows, ncols, m_k);
+
 
         m_total_soldiers[0] = 0;
         m_total_soldiers[1] = 0;
     }
 
     // access to the matrix of sodiers
-    const matrix<Soldier>&
+    const border_matrix<Soldier>&
     mat() const
     {
         return m_soldiers;
     }
 
-    matrix<Soldier>&
+    border_matrix<Soldier>&
     mat()
     {
         return m_soldiers;
@@ -272,10 +278,10 @@ public:
                 unsigned char claimed = m_claimed(x, y);
                 // resolve conflict if this cell is claimed by more than one soldier
                 if ((claimed > 0) && ((claimed & (claimed - 1)) != 0)) {
-                    unsigned char max_size = sizeof(unsigned char) * 8;
+                    unsigned char max_size = 8;
                     float sum_prob = 0.0;
                     float rel_prob[max_size];
-                    for (unsigned char a = 0, b = 1; a < max_size; ++a, b = b << 1) {
+                    for (unsigned char a = 0, b = 1; a < max_size; ++a, b <<= 1) {
                         if ((claimed & b) != 0) {
                             // find the relative index of the cell that set this bit
                             unsigned char t = a + a / 4;
@@ -327,7 +333,7 @@ public:
                     m_soldiers(x + i - 1, y + j - 1).clear();
                     // update the move direction: 3*(t/3) + t%3 - (3*(t/3) + t%3)/5, translates to be 'a'
                     m_lastmove(x,y) = a;
-		
+
                     // increase neighbor count in the new neighborhood
                     updateNeighborCounts(x, y, s.army(), true);
                     // decrease neighbor count in the old neighborhood
@@ -394,13 +400,9 @@ public:
                     std::vector<std::pair<unsigned char, unsigned char> > potentials;
                     // scan the cells in kill radius and record all the enemy soldiers
                     for (unsigned char i = 0; i < 2 * r; ++i) {
-                        if ((x + i >= r) && (x + i - r < m_nrows)) {
-                            for (unsigned char j = 0; j < 2 * r; ++j) {
-                                if ((y + j >= r) && (y + j - r < m_ncols)) {
-                                    if (m_soldiers(x + i - r, y + j - r).army() != army) {
-                                        potentials.push_back(std::make_pair(i, j));
-                                    }
-                                }
+                        for (unsigned char j = 0; j < 2 * r; ++j) {
+                            if (m_soldiers(x + i - r, y + j - r).army() != army) {
+                                potentials.push_back(std::make_pair(i, j));
                             }
                         }
                     }
@@ -498,14 +500,21 @@ private:
     {
         for (unsigned char i = 0; i < 2 * m_k; ++i) {
             // decrease neighbor count in the neighborhood
-            if ((x + i >= m_k) && (x + i - m_k < m_nrows)) {
-                for (unsigned char j = 0; j < 2 * m_k; ++j) {
-                    if ((y + j >= m_k) && (y + j - m_k < m_ncols)) {
-                        // there is something wrong if we are trying to decrease neighbor count when it is 0
-                        assert(increase || (m_neighbors[army](x + i - m_k, y + j - m_k) > 0));
-                        m_neighbors[army](x + i - m_k, y + j - m_k) += (increase ? 1 : -1);
-                    }
-                }
+            for (unsigned char j = 0; j < 2 * m_k; ++j) {
+                // there is something wrong if we are trying to decrease neighbor count when it is 0
+                assert(increase || (m_neighbors[army](x + i - m_k, y + j - m_k) > 0));
+                m_neighbors[army](x + i - m_k, y + j - m_k) += (increase ? 1 : -1);
+            }
+        }
+    }
+
+    void calcNeighborCounts() {
+        for (int army = 0; army <= 1; army++) {
+            // zero all counts
+            m_neighbors[army].zero();
+            for (std::size_t x = 0; x < m_nrows; ++x) {
+                // initialize window for row
+                // TODO -> first implement everything using the bordermatrix thing
             }
         }
     }
@@ -533,7 +542,7 @@ private:
                 return;
             }
         }
-	
+
         unsigned char army = m_soldiers(x, y).army();
 
         // give higher global preference to the cell which takes the soldier closer to the target
@@ -571,15 +580,9 @@ private:
         float sum_neighbors = 0.0;
         // first store the neighbor counts in the k-neighborhood
         for (unsigned char i = 0; i < 3; ++i) {
-            // check the row bounds
-            if ((x + i * m_k >= m_k) && (x +  i * m_k - m_k < m_nrows)) {
-                for (unsigned char j = 0; j < 3; ++j) {
-                    // check the column bounds
-                    if ((y + j * m_k >= m_k) && (y + j * m_k - m_k < m_ncols)) {
-                        mat_g[i * 3 + j] = m_neighbors[e_army](x + i * m_k - m_k, y + j * m_k - m_k);
-                    }
-                    sum_neighbors += mat_g[i * 3 + j];
-                }
+            for (unsigned char j = 0; j < 3; ++j) {
+                mat_g[i * 3 + j] = m_neighbors[e_army](x + i * m_k - m_k, y + j * m_k - m_k);
+                sum_neighbors += mat_g[i * 3 + j];
             }
         }
 
@@ -605,15 +608,9 @@ private:
         float sum_neighbors = 0.0;
         // first store the neighbor counts in the k-neighborhood
         for (unsigned char i = 0; i < 3; ++i) {
-            // check the row bounds
-            if ((x + i * m_k >= m_k) && (x +  i * m_k - m_k < m_nrows)) {
-                for (unsigned char j = 0; j < 3; ++j) {
-                    // check the column bounds
-                    if ((y + j * m_k >= m_k) && (y + j * m_k - m_k < m_ncols)) {
-                        mat_l[i * 3 + j] = m_neighbors[army](x + i * m_k - m_k, y + j * m_k - m_k);
-                    }
-                    sum_neighbors += mat_l[i * 3 + j];
-                }
+            for (unsigned char j = 0; j < 3; ++j) {
+                mat_l[i * 3 + j] = m_neighbors[army](x + i * m_k - m_k, y + j * m_k - m_k);
+                sum_neighbors += mat_l[i * 3 + j];
             }
         }
 
@@ -654,27 +651,21 @@ private:
 
         float sum_prob = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
-            // check the row bounds
-            if ((x + i >= 1) && (x + i - 1 < m_nrows)) {
-                for (unsigned char j = 0; j < 3; ++j) {
-                    // check the column bounds
-                    if ((y + j >= 1) && (y + j - 1 < m_ncols)) {
-                        if (m_soldiers(x + i - 1, y + j - 1).empty()) {
-                            // calculate actual matrix of preference for this index
-                            // TODO: refine the following expression to give preference to the current dir
-                            float mat_ij = m_follow_prev * mat_m[i * 3 + j] + (1 - m_follow_prev) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
-                            // TODO: refine the following expression?
-                            assert (mat_ij >= 0);
-                            trans_prob[i * 3 + j] = mat_ij * (m_dynamic[soldier.army()](x + i - 1, y + j - 1) / 255.0) * (m_static(x + i - 1, y + j - 1) / 255.0);
+            for (unsigned char j = 0; j < 3; ++j) {
+                if (m_soldiers(x + i - 1, y + j - 1).empty()) {
+                    // calculate actual matrix of preference for this index
+                    // TODO: refine the following expression to give preference to the current dir
+                    float mat_ij = m_follow_prev * mat_m[i * 3 + j] + (1 - m_follow_prev) * (a * mat_g[i * 3 + j] + (1 - a) * (h * mat_g[i * 3 + j] + (1 - h) * mat_l[i * 3 + j]));
+                    // TODO: refine the following expression?
+                    assert (mat_ij >= 0);
+                    trans_prob[i * 3 + j] = mat_ij * (m_dynamic[soldier.army()](x + i - 1, y + j - 1) / 255.0) * (m_static(x + i - 1, y + j - 1) / 255.0);
 
-                            // reset global and local matrix of preference
-                            mat_g[i * 3 + j] = 0.0;
-                            mat_l[i * 3 + j] = 0.0;
-                            mat_m[i * 3 + j] = 0.0;
-                        }
-                    }
-                    sum_prob += trans_prob[i * 3 + j];
+                    // reset global and local matrix of preference
+                    mat_g[i * 3 + j] = 0.0;
+                    mat_l[i * 3 + j] = 0.0;
+                    mat_m[i * 3 + j] = 0.0;
                 }
+                sum_prob += trans_prob[i * 3 + j];
             }
         }
 
@@ -735,18 +726,18 @@ private:
     size_t m_total_soldiers[2];
 
     // grid for movement of the soldiers
-    matrix<Soldier> m_soldiers;
+    border_matrix<Soldier> m_soldiers;
     // matrix for storing static floor field
-    matrix<unsigned char> m_static;
+    border_matrix<unsigned char> m_static;
     // matrix for storing dynamic floor fields, for both the armies
-    matrix<unsigned char> m_dynamic[2];
+    border_matrix<unsigned char> m_dynamic[2];
 
     // matrix for storing extended neighborhood counts, for both the armies
-    matrix<unsigned short> m_neighbors[2];
+    border_matrix<unsigned short> m_neighbors[2];
     // matrix for storing soldiers which want to move to each cell
-    matrix<unsigned char> m_claimed;
+    border_matrix<unsigned char> m_claimed;
     // matrix for storing probabilities (kill and movement)
-    matrix<float> m_probability;
+    border_matrix<float> m_probability;
     // matrix to store the last move
     matrix<unsigned char> m_lastmove;
 
