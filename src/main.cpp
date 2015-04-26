@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
         ff.mat().at(18, i) = Soldier(1, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
         ff.mat().at(19, i) = Soldier(1, Soldier::SWORDSMAN, randomAtMax(max_skill), randomAtMax(max_aggression));
     }
-    ff.setTarget(0, 0, 5);
-    ff.setTarget(1, 10, 5); 
+    ff.setFlag(0, 0, 5);
+    ff.setFlag(1, 10, 5); 
 
     // MUST be called before the start of iterations
     ff.initializeNeighborCounts();
