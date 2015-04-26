@@ -244,7 +244,7 @@ public:
 
     /// set everything to zero or default constructed
     inline void zero() {
-        this->zero();
+        this->mat().zero();
     }
 
 protected:

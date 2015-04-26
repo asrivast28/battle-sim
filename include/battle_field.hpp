@@ -231,7 +231,7 @@ public:
         for (size_t x = 0; x < m_nrows; ++x) {
             for (size_t y = 0; y < m_ncols; ++y) {
                 if (!m_soldiers(x, y).empty()) {
-                    updateNeighborCounts(x, y, m_soldiers(x, y).army(), true);
+                    //updateNeighborCounts(x, y, m_soldiers(x, y).army(), true);
                     ++m_total_soldiers[m_soldiers(x, y).army()];
                 }
             }
@@ -256,6 +256,9 @@ public:
         float mat_m[3 * 3] = {};
         // transitional probability matrix
         float trans_prob[3 * 3] = {};
+
+        // calc neighbor count
+        calcNeighborCounts();
 
         // claim-a-cell loop
         for (size_t x = 0; x < m_nrows; ++x) {
@@ -335,9 +338,9 @@ public:
                     m_lastmove(x,y) = a;
 
                     // increase neighbor count in the new neighborhood
-                    updateNeighborCounts(x, y, s.army(), true);
+                    //updateNeighborCounts(x, y, s.army(), true);
                     // decrease neighbor count in the old neighborhood
-                    updateNeighborCounts(x + i - 1, y + j - 1, s.army(), false);
+                    //updateNeighborCounts(x + i - 1, y + j - 1, s.army(), false);
 
                     //DEBUG_MSG("Soldier at index (%zd, %zd) moving to (%zd, %zd)\n", x + i - 1, y + j - 1, x, y);
 
@@ -434,7 +437,7 @@ public:
                         //DEBUG_MSG("killing (%zd, %zd)\n", x, y);
                         unsigned char army = m_soldiers(x, y).army();
                         m_soldiers(x, y).kill();
-                        updateNeighborCounts(x, y, army, false);
+                        //updateNeighborCounts(x, y, army, false);
                         if (record) {
                             if (count < positions.size()) {
                                 positions[count++] = x * m_ncols + y;
@@ -512,9 +515,44 @@ private:
         for (int army = 0; army <= 1; army++) {
             // zero all counts
             m_neighbors[army].zero();
-            for (std::size_t x = 0; x < m_nrows; ++x) {
+            border_matrix<unsigned short> buf(m_neighbors[army]);
+            // first the rows
+            for (int64_t x = -m_k; x < (int64_t)m_nrows+m_k; ++x) {
                 // initialize window for row
-                // TODO -> first implement everything using the bordermatrix thing
+                std::size_t sum = 0;
+                for (int64_t y = -m_k; y < 0; ++y) {
+                    if (!m_soldiers.at(x, y).empty() && m_soldiers.at(x,y).army() == army) {
+                      sum++;
+                    }
+                }
+                // go though row (moving window)
+                for (int64_t y = -m_k; y < (int64_t)m_ncols+m_k; ++y) {
+                    if (y < (int64_t)m_ncols && !m_soldiers.at(x, y+m_k).empty() && m_soldiers.at(x, y+m_k).army() == army) {
+                      sum++;
+                    }
+                    if (y > 0 && !m_soldiers.at(x, y-m_k-1).empty() && m_soldiers.at(x, y-m_k-1).army() == army) {
+                      sum--;
+                    }
+                    buf.at(x,y) = sum;
+                }
+            }
+            // now sum over columns
+            for (int64_t y = -m_k; y < (int64_t)m_ncols+m_k; ++y) {
+                // initialize window for column
+                std::size_t sum = 0;
+                for (int64_t x = -m_k; x < 0; ++x) {
+                    sum += buf.at(x,y);
+                }
+                // go though row (moving window)
+                for (int64_t x = -m_k; x < (int64_t)m_nrows+m_k; ++x) {
+                    if (x < (int64_t)m_nrows) {
+                      sum += buf.at(x+m_k, y);
+                    }
+                    if (x > 0) {
+                      sum -= buf.at(x-m_k-1, y);
+                    }
+                    m_neighbors[army].at(x,y) = sum;
+                }
             }
         }
     }
