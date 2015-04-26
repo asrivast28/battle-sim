@@ -173,7 +173,9 @@ if __name__ == '__main__':
     fill = IconFill() if args.render == 'icon' else PixelFill()
 
     time = ((args.iter * 2) / args.fps) + (1 if (args.iter * 2) % args.fps else 0)
-    clip = mpy.VideoClip(FrameBuilder(fill, image = 'field.png'), duration = time)
+    #clip = mpy.VideoClip(FrameBuilder(fill, image = 'field.png'), duration = time)
+    accessibility = numpy.full((200, 200), 255, dtype = numpy.uint8)
+    clip = mpy.VideoClip(FrameBuilder(fill, accessibility = accessibility), duration = time)
 
     name = 'battle.%s'%(args.ext)
     if args.ext == 'gif':
