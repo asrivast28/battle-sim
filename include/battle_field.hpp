@@ -586,10 +586,10 @@ private:
         // give higher global preference to the cell which takes the soldier closer to the target
         float max_distance = 0.0;
         for (unsigned char i = 0; i < 3; ++i) {
-              size_t diff_x = m_flag_x[army] > (x + i) ? (m_flag_x[army] - (x + i - 1)) : ((x + i - 1) - m_flag_x[army]);
+              float diff_x = m_flag_x[army] > (x + i) ? (m_flag_x[army] - (float)(x + i - 1)) : ((x + i - 1) - (float)m_flag_x[army]);
               for (unsigned char j = 0; j < 3; ++j) {
-                  size_t diff_y = m_flag_y[army] > (y + j) ? (m_flag_y[army] - (y + j - 1)) : ((y + j - 1) - m_flag_y[army]);
-                  float distance = sqrt(pow(diff_x, 2.0) + pow(diff_y, 2.0));
+                  float diff_y = m_flag_y[army] > (y + j) ? (m_flag_y[army] - (float)(y + j - 1)) : ((y + j - 1) - (float)m_flag_y[army]);
+                  float distance = sqrt((float)diff_x*(float)diff_x + (float)diff_y*(float)diff_y);
                   mat_g[i * 3 + j] = distance;
                   if (max_distance < distance) {
                       max_distance = distance;
