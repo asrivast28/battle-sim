@@ -51,13 +51,14 @@ class BattleField(battlesim.BattleField):
     def __setSoldiers(self, H, W):
         soldiers = []
         # army 0
-        soldiers.extend((0 * W + y, Soldier(0, Soldier.ARCHER)) for y in xrange(0, W))
-        soldiers.extend((1 * W + y, Soldier(0, Soldier.SWORDSMAN)) for y in xrange(0, W))
-        soldiers.extend((4 * W + y, Soldier(0, Soldier.LEADER)) for y in xrange(0, W, 10))
+        #soldiers.extend((0 * W + y, Soldier(0, Soldier.ARCHER)) for y in xrange(0, W))
+        #soldiers.extend((1 * W + y, Soldier(0, Soldier.SWORDSMAN)) for y in xrange(0, W))
+        #soldiers.extend((4 * W + y, Soldier(0, Soldier.LEADER)) for y in xrange(0, W, 10))
         # army 1
-        soldiers.extend(((H - 5) * W + y, Soldier(1, Soldier.LEADER)) for y in xrange(0, W, 10))
-        soldiers.extend(((H - 2) * W + y, Soldier(1, Soldier.SWORDSMAN)) for y in xrange(0, W))
-        soldiers.extend(((H - 1) * W + y, Soldier(1, Soldier.ARCHER)) for y in xrange(0, W))
+        #soldiers.extend(((H - 5) * W + y, Soldier(1, Soldier.LEADER)) for y in xrange(0, W, 10))
+        for x in xrange(H - 4, H):
+          soldiers.extend((x * W + y, Soldier(1, Soldier.SWORDSMAN)) for y in xrange(0, W))
+        #soldiers.extend(((H - 1) * W + y, Soldier(1, Soldier.ARCHER)) for y in xrange(0, W))
 
         self.setSoldiers(soldiers)
 
