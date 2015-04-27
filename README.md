@@ -29,7 +29,8 @@ make
 
 Build requirements:
 - python 2.7
-- pygames
+- numpy
+- pygame
 - moviepy
 - swig
 - gizeh
