@@ -16,6 +16,8 @@ floor field model is implemented only in C++, not in the python frontend.
 Build requirements:
 - MPI (MPI-2 capable MPI implementation, such as OpenMPI version 1.6.5)
 - cmake
+- Google Unit test framework
+- cxx-prettyprint
 
 Building:
 ```sh
