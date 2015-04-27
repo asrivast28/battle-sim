@@ -402,8 +402,8 @@ public:
                     unsigned char r = m_soldiers(x, y).killRadius();
                     std::vector<std::pair<unsigned char, unsigned char> > potentials;
                     // scan the cells in kill radius and record all the enemy soldiers
-                    for (unsigned char i = 0; i < 2 * r+1; ++i) {
-                        for (unsigned char j = 0; j < 2 * r+1; ++j) {
+                    for (unsigned char i = 0; i < 2*r + 1; ++i) {
+                        for (unsigned char j = 0; j < 2*r + 1; ++j) {
                             if (m_soldiers(x + i - r, y + j - r).army() != army) {
                                 potentials.push_back(std::make_pair(i, j));
                             }
