@@ -258,6 +258,7 @@ private:
  * Inherit from these to specialize for your own type easily.
  */
 
+#endif
 
 /**
  * @brief   A contiguous datatype of the same base type
@@ -333,7 +334,6 @@ private:
     datatype<T> _base_type;
 };
 
-#endif
 
 } // namespace mxx
 

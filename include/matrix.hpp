@@ -246,6 +246,14 @@ public:
     inline void zero() {
         this->mat().zero();
     }
+    // set the borders to zero
+    inline void border_zero() {
+        for (index_t i = 0; i < this->m; ++i)
+            for (index_t j = 0; j < this->n; ++j)
+                if ((i < border_size || i >= (index_t)this->nrows()+border_size) ||
+                    (j < border_size || j >= (index_t)this->ncols()+border_size))
+                    mat().at(i,j) = T();
+    }
 
 protected:
     index_t border_size;

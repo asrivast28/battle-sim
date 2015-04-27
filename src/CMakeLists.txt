@@ -9,3 +9,6 @@ add_executable(battle main.cpp)
 
 add_executable(test-dmat test_distributed.cpp)
 target_link_libraries(test-dmat ${EXTRA_LIBS})
+
+add_executable(parbattle parmain.cpp)
+target_link_libraries(parbattle ${EXTRA_LIBS})

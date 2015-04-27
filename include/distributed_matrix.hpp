@@ -31,7 +31,7 @@ public:
         MPI_Comm_size(comm, &p);
         mxx::datatype<T> dt;
         MPI_Datatype send_type, rcv_type;
-        MPI_Type_vector(this->nrows(), this->ncols(), this->nrows()+2*this->border_size(), dt.type(), &send_type);
+        MPI_Type_vector(this->nrows(), this->ncols(), this->ncols()+2*this->border_size, dt.type(), &send_type);
         MPI_Type_commit(&send_type);
         MPI_Type_contiguous(this->nrows()*this->ncols(), dt.type(), &rcv_type);
         MPI_Type_commit(&rcv_type);
