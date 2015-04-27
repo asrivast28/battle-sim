@@ -39,9 +39,13 @@ int main(int argc, char *argv[])
     BattleField::setFollowPreviousProbability(0.25);
     BattleField::setExtendedNeighborhoodSize(5);
 
+    //for (int skill1 = 0; skill1 <= 255; skill1 += 5) {
+    for (int neigh = 1; neigh < 10; neigh += 1) {
     srand(0);
+    int survive[2] = {0,0};
+    int itersum = 0;
+    BattleField::setExtendedNeighborhoodSize(neigh);
     for (int iter = 0; iter < iterArg.getValue(); ++iter) {
-
 
     BattleField ff(sizexArg.getValue(),sizeyArg.getValue());
 
@@ -57,8 +61,8 @@ int main(int argc, char *argv[])
         */
         for (int j = 0; j < soldierArg.getValue(); ++j)
         {
-            ff.mat().at(j, i) = Soldier(1, Soldier::SWORDSMAN, skill0Arg.getValue(), 100);
-            ff.mat().at(sizexArg.getValue()-j-1, i) = Soldier(0, Soldier::SWORDSMAN, skill1Arg.getValue(), 100);
+            ff.mat().at(j, i) = Soldier(0, Soldier::SWORDSMAN, skill0Arg.getValue(), 255);
+            ff.mat().at(sizexArg.getValue()-j-1, i) = Soldier(1, Soldier::SWORDSMAN, skill1Arg.getValue(), 255);
         }
     }
 
@@ -79,12 +83,21 @@ int main(int argc, char *argv[])
         {
             size_t count0 = ff.soldierCount(0);
             size_t count1 = ff.soldierCount(1);
-            std::cout << i << "\t" << count0 << "\t" << count1 << std::endl;
+            //std::cout << i << "\t" << count0 << "\t" << count1 << std::endl;
+            survive[0] += count0;
+            survive[1] += count1;
+            itersum += i;
             break;
         }
         ++i;
     }
     }
+
+    // print out stats
+    //std::cout << agg1 << "\t" << (float)survive[0]/iterArg.getValue() << "\t" << (float)survive[1]/iterArg.getValue() << std::endl;
+    std::cout << neigh << "\t" << itersum/iterArg.getValue() << std::endl;
+    }
+
     } catch (TCLAP::ArgException& e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
     }
