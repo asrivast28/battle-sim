@@ -1,7 +1,13 @@
 Battle Simulator using Floor Field Models
 =========================================
-(CSE6730 Modeling and Simulation Project 2)
 
+This project was undertaken as part of the course CSE 6730 - Modeling & Simulations. The final report for the project can be found [here](report.pdf).
+
+Contributors
+------------
+* Ankit Srivastava
+* Patrick Flick
+* Rahul Nihalani
 
 Building
 --------
